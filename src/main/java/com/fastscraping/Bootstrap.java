@@ -1,18 +1,22 @@
 package com.fastscraping;
 
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fastscraping.dao.redis.RedisDao;
 import com.fastscraping.dao.redis.RedissonConfig;
 import com.fastscraping.models.ActionName;
 import com.fastscraping.models.ElementWithActions;
+import com.fastscraping.models.ScrapingInformation;
 import com.fastscraping.scraper.ActionExecutor;
 import com.fastscraping.scraper.ActionFilter;
 import com.fastscraping.scraper.SeleniumSetup;
 import com.fastscraping.scraper.WebpageScraper;
+import com.fastscraping.util.JsonHelper;
 import org.openqa.selenium.InvalidArgumentException;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.firefox.FirefoxDriver;
 
+import java.io.*;
 import java.net.MalformedURLException;
 import java.util.LinkedList;
 import java.util.List;
@@ -64,7 +68,23 @@ public class Bootstrap {
 
             actionFilter.addAcionsForLink(rootURL, elementsWithActions);
 
-            scraper.startScraping();
+            File scrapingInformationJson = new File("/home/ashish/scraping_information.json");
+            BufferedReader bufReader = new BufferedReader(new FileReader(scrapingInformationJson));
+
+
+            bufReader.lines().reduce((x, y) -> x + y + "\n").ifPresent(json -> {
+                try {
+                    System.out.println("The JSON is -- \n" + json);
+                    ScrapingInformation scrapingInfo = null;
+                    scrapingInfo = JsonHelper.getObjectFromJson(json, ScrapingInformation.class);
+                    System.out.println("The scraping information is -- " + scrapingInfo.toString());
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            });
+
+
+//            scraper.startScraping();
 
         } catch (InvalidArgumentException | MalformedURLException ex) {
             if (webDriver != null) {
@@ -73,6 +93,10 @@ public class Bootstrap {
             System.out.println("There is an error while trying to access the link provided for this scraper. " +
                     ex.getMessage());
             System.exit(-1);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
         } finally {
             System.exit(0);
         }

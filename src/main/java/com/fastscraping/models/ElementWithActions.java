@@ -7,13 +7,19 @@ import java.util.List;
 
 public class ElementWithActions {
 
-    private String selector;
-    private List<ActionName> actions;
+    private final String selector;
+    private final List<ActionName> actions;
+    private final List<DataToExtract> dataToExtract;
+
 
     @JsonCreator
-    public ElementWithActions(@JsonProperty("selector") String selector, @JsonProperty("actions")List<ActionName> actions) {
+    public ElementWithActions(@JsonProperty("selector") String selector,
+                              @JsonProperty("actions") List<ActionName> actions,
+                              @JsonProperty("dataToExtract") List<DataToExtract> dataToExtract
+                              ) {
         this.selector = selector;
         this.actions = actions;
+        this.dataToExtract = dataToExtract;
     }
 
     public String getSelector() {
@@ -31,6 +37,7 @@ public class ElementWithActions {
     public static class ElementWithActionsBuilder {
         private String selector;
         private List<ActionName> actions;
+        private List<DataToExtract> dataToExtract;
 
         public ElementWithActionsBuilder setSelector(String selector) {
             this.selector = selector;
@@ -42,8 +49,13 @@ public class ElementWithActions {
             return this;
         }
 
+        public ElementWithActionsBuilder setDataToExtract(List<DataToExtract> dataToExtract) {
+            this.dataToExtract = dataToExtract;
+            return this;
+        }
+
         public ElementWithActions build() {
-            return new ElementWithActions(selector, actions);
+            return new ElementWithActions(selector, actions, dataToExtract);
         }
     }
 }
