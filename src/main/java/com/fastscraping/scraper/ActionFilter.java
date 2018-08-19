@@ -20,8 +20,6 @@ public class ActionFilter {
 
     public List<ElementWithActions> getActionsByLink(String link) throws MalformedURLException {
 
-        System.out.println("Trying to get the elements from redis Dao");
-
         return redisDao.getElementsWithActionsByLink(link)
                 .stream()
                 .filter(Optional::isPresent)

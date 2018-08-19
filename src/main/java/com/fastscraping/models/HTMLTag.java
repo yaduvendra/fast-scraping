@@ -10,8 +10,8 @@ public interface HTMLTag {
         private final String text;
 
         @JsonCreator
-        public HTMLTagWithText(@JsonProperty("name") String name, @JsonProperty("text")  String text) {
-            this.selector = name;
+        public HTMLTagWithText(@JsonProperty("selector") String selector, @JsonProperty("text")  String text) {
+            this.selector = selector;
             this.text = text;
         }
     }

@@ -8,5 +8,5 @@ public enum ActionName {
     GRAB_LINKS_TO_SCRAPE,
     HOVER,
     SWITCH_TO_ALERT,
-
+    GRAB_LINKS_IN_GRID_TO_SCRAPE
 }

@@ -33,6 +33,7 @@ public class Bootstrap {
         WebDriver webDriver = null;
 
         try {
+/*
             webDriver = new FirefoxDriver();
 
             String rootURL = "https://www.hdwallpapers.net/";
@@ -67,6 +68,7 @@ public class Bootstrap {
             );
 
             actionFilter.addAcionsForLink(rootURL, elementsWithActions);
+*/
 
             File scrapingInformationJson = new File("/home/ashish/scraping_information.json");
             BufferedReader bufReader = new BufferedReader(new FileReader(scrapingInformationJson));
@@ -74,11 +76,11 @@ public class Bootstrap {
 
             bufReader.lines().reduce((x, y) -> x + y + "\n").ifPresent(json -> {
                 try {
-                    System.out.println("The JSON is -- \n" + json);
-                    ScrapingInformation scrapingInfo = null;
-                    scrapingInfo = JsonHelper.getObjectFromJson(json, ScrapingInformation.class);
-                    System.out.println("The scraping information is -- " + scrapingInfo.toString());
-                } catch (IOException e) {
+                    ScrapingInformation scrapingInfo = JsonHelper.getObjectFromJson(json, ScrapingInformation.class);
+                    System.out.println("Number of roots are - " + scrapingInfo.getRoots().size());
+                    System.out.println("Number of web pages are - " + scrapingInfo.getWebpages().size());
+                    System.out.println("The JSON serialized is -- " + JsonHelper.toPrettyJsonString(scrapingInfo));
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
             });
@@ -86,7 +88,7 @@ public class Bootstrap {
 
 //            scraper.startScraping();
 
-        } catch (InvalidArgumentException | MalformedURLException ex) {
+        } catch (InvalidArgumentException ex) {
             if (webDriver != null) {
                 webDriver.close();
             }
@@ -95,10 +97,8 @@ public class Bootstrap {
             System.exit(-1);
         } catch (FileNotFoundException e) {
             e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
         } finally {
-            System.exit(0);
+            System.exit(1);
         }
     }
 }

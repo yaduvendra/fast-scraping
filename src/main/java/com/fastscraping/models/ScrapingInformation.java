@@ -17,4 +17,11 @@ public class ScrapingInformation {
         this.webpages = webpages;
     }
 
+    public List<String> getRoots() {
+        return roots;
+    }
+
+    public List<Webpage> getWebpages() {
+        return webpages;
+    }
 }
