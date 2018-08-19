@@ -16,12 +16,22 @@ public class JsonHelper {
         objectMapper.setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY);
     }
 
-    public static synchronized String toJsonString(Object object) throws JsonProcessingException {
-        return objectMapper.writer().writeValueAsString(object);
+    public static synchronized String toJsonString(Object object)  {
+        try {
+            return objectMapper.writer().writeValueAsString(object);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+            return "";
+        }
     }
 
-    public static synchronized String toPrettyJsonString(Object object) throws JsonProcessingException {
-        return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(object);
+    public static synchronized String toPrettyJsonString(Object object) {
+        try {
+            return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(object);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+            return "";
+        }
     }
 
     public static synchronized <T> T getObjectFromJson(String jsonString, Class<T> className) throws IOException {

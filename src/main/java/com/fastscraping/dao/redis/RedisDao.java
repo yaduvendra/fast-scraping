@@ -1,10 +1,9 @@
 package com.fastscraping.dao.redis;
 
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fastscraping.dao.ScraperDaoInf;
 import com.fastscraping.models.ElementWithActions;
+import com.fastscraping.models.ScrapingInformation;
+import com.fastscraping.util.Constants;
 import org.redisson.api.RedissonClient;
 
 import java.io.IOException;
@@ -14,8 +13,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static com.fastscraping.util.JsonHelper.toJsonString;
 import static com.fastscraping.util.JsonHelper.getObjectFromJson;
+import static com.fastscraping.util.JsonHelper.toJsonString;
+import static com.fastscraping.util.JsonHelper.toPrettyJsonString;
 
 public class RedisDao implements ScraperDaoInf {
 
@@ -28,47 +28,46 @@ public class RedisDao implements ScraperDaoInf {
     }
 
     @Override
-    public List<Boolean> saveLinksToScrape(String key, List<String> links) {
+    public List<Boolean> saveLinksToScrape(final String key, List<String> links) {
         return links.stream()
-                .map(link -> redissonClient.getSet(key).add(link))
+                .map(link -> {
+                    synchronized (redissonClient) {
+                        return redissonClient.getSet(key).add(link);
+                    }
+                })
                 .collect(Collectors.toList());
     }
 
     @Override
-    public List<String> getLinksToScrape(String key) {
-        return redissonClient.getSet(key)
-                .readAll().stream()
-                .map(valueObj -> (String) valueObj)
-                .collect(Collectors.toList());
+    public List<String> getLinksToScrape(final String key) {
+        synchronized (redissonClient) {
+            return redissonClient.getSet(key)
+                    .readAll().stream()
+                    .map(valueObj -> (String) valueObj)
+                    .collect(Collectors.toList());
+        }
     }
 
-    public List<Boolean> setLinkToAction(String link, List<ElementWithActions> elementsWithActions)
+    public List<Boolean> setLinkToAction(final String link, final List<ElementWithActions> elementsWithActions)
             throws MalformedURLException {
 
         URL urlKey = new URL(link);
         return elementsWithActions
                 .stream()
                 .map(elementWithActions -> {
-                    try {
-                        String redisSetKey = urlKey.getHost() + urlKey.getPath(); //Only www.example.com + /path/to/some/
-                        String jsonString = toJsonString(elementWithActions);
-                        System.out.println("Going to store - " + jsonString + " for key - " + redisSetKey);
+                    String redisSetKey = urlKey.getHost() + urlKey.getPath(); //Only www.example.com + /some/path/
+                    String jsonString = toJsonString(elementWithActions);
 
-                        return redissonClient.getSet(redisSetKey).add(jsonString);
-                    } catch (JsonProcessingException e) {
-                        e.printStackTrace();
-                        return false;
-                    }
+                    return redissonClient.getSet(redisSetKey).add(jsonString);
                 })
                 .collect(Collectors.toList());
 
     }
 
-    public List<Optional<ElementWithActions>> getElementsWithActionsByLink(String link) throws MalformedURLException {
+    public List<Optional<ElementWithActions>> getElementsWithActionsByLink(final String link)
+            throws MalformedURLException {
 
         URL urlKey = new URL(link);
-
-        System.out.println("Getting the elementWithActObjs with key - " + urlKey.getHost() + urlKey.getPath());
 
         return redissonClient
                 .getSet(urlKey.getHost() + urlKey.getPath()).readAll()
@@ -83,4 +82,27 @@ public class RedisDao implements ScraperDaoInf {
                 })
                 .collect(Collectors.toList());
     }
+
+    public void indexScrapingInforamtion(final ScrapingInformation scrapingInformation,
+                                         final String clientId, final String jobId) {
+        scrapingInformation.getWebpages().forEach(webpage -> {
+            if (webpage.getElementWithActions() != null) {
+                if (webpage.getUrlRegex() != null) {
+                    redissonClient.getMap(Constants.getUrlRegexMapName(clientId + jobId))
+                            .put(webpage.getUrlRegex(), toPrettyJsonString(webpage.getElementWithActions()));
+                }
+
+                if (webpage.getUniqueTag() != null) {
+                    redissonClient.getMap(Constants.getUniqueTagMapName(clientId + jobId))
+                            .put(webpage.getUniqueTag(), toPrettyJsonString(webpage.getElementWithActions()));
+                }
+
+                if (webpage.getUniqueStringOnPage() != null) {
+                    redissonClient.getMap(Constants.getUniqueStringMapName(clientId + jobId))
+                            .put(webpage.getUniqueStringOnPage(), toPrettyJsonString(webpage.getElementWithActions()));
+                }
+            }
+        });
+    }
+
 }

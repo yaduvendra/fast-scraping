@@ -32,13 +32,15 @@ public class Bootstrap {
 
         WebDriver webDriver = null;
 
+        RedisDao redisDao = new RedisDao(new RedissonConfig());
+
         try {
 /*
             webDriver = new FirefoxDriver();
 
             String rootURL = "https://www.hdwallpapers.net/";
 
-            RedisDao redisDao = new RedisDao(new RedissonConfig());
+
 
             ActionExecutor actionExecutor = new ActionExecutor.ActionExecutorBuilder()
                     .setDriver(webDriver)
@@ -80,6 +82,9 @@ public class Bootstrap {
                     System.out.println("Number of roots are - " + scrapingInfo.getRoots().size());
                     System.out.println("Number of web pages are - " + scrapingInfo.getWebpages().size());
                     System.out.println("The JSON serialized is -- " + JsonHelper.toPrettyJsonString(scrapingInfo));
+
+                    redisDao.indexScrapingInforamtion(scrapingInfo, "ashish1234", "job100");
+
                 } catch (Exception e) {
                     e.printStackTrace();
                 }

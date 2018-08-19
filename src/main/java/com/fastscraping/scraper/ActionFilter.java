@@ -29,11 +29,8 @@ public class ActionFilter {
 
     public List<Boolean> addAcionsForLink(String link, List<ElementWithActions> elementsWithActions)
             throws MalformedURLException {
-        try {
-            System.out.println("Following is going to be saved in redis -- " + JsonHelper.toPrettyJsonString(elementsWithActions));
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
-        }
+        System.out.println("Following is going to be saved in redis -- " + JsonHelper.toPrettyJsonString(elementsWithActions));
+
         return redisDao.setLinkToAction(link, elementsWithActions);
     }
 

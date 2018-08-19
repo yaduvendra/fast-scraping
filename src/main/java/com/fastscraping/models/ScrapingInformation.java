@@ -2,6 +2,7 @@ package com.fastscraping.models;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.redisson.api.RSet;
 
 import java.util.List;
 
@@ -24,4 +25,5 @@ public class ScrapingInformation {
     public List<Webpage> getWebpages() {
         return webpages;
     }
+
 }
