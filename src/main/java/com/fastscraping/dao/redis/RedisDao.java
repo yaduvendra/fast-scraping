@@ -13,9 +13,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static com.fastscraping.util.JsonHelper.getObjectFromJson;
-import static com.fastscraping.util.JsonHelper.toJsonString;
-import static com.fastscraping.util.JsonHelper.toPrettyJsonString;
+import static com.fastscraping.util.JsonHelper.*;
 
 public class RedisDao implements ScraperDaoInf {
 
@@ -28,40 +26,24 @@ public class RedisDao implements ScraperDaoInf {
     }
 
     @Override
-    public List<Boolean> saveLinksToScrape(final String key, List<String> links) {
+    public List<Boolean> saveLinksToScrape(final String clientId, final String jobId, List<String> links) {
         return links.stream()
                 .map(link -> {
                     synchronized (redissonClient) {
-                        return redissonClient.getSet(key).add(link);
+                        return redissonClient.getSet(Constants.linksToScrapeSetName(clientId + jobId)).add(link);
                     }
                 })
                 .collect(Collectors.toList());
     }
 
     @Override
-    public List<String> getLinksToScrape(final String key) {
+    public List<String> getLinksToScrape(final String clientId, final String jobId) {
         synchronized (redissonClient) {
-            return redissonClient.getSet(key)
+            return redissonClient.getSet(Constants.linksToScrapeSetName(clientId + jobId))
                     .readAll().stream()
                     .map(valueObj -> (String) valueObj)
                     .collect(Collectors.toList());
         }
-    }
-
-    public List<Boolean> setLinkToAction(final String link, final List<ElementWithActions> elementsWithActions)
-            throws MalformedURLException {
-
-        URL urlKey = new URL(link);
-        return elementsWithActions
-                .stream()
-                .map(elementWithActions -> {
-                    String redisSetKey = urlKey.getHost() + urlKey.getPath(); //Only www.example.com + /some/path/
-                    String jsonString = toJsonString(elementWithActions);
-
-                    return redissonClient.getSet(redisSetKey).add(jsonString);
-                })
-                .collect(Collectors.toList());
-
     }
 
     public List<Optional<ElementWithActions>> getElementsWithActionsByLink(final String link)
@@ -83,24 +65,42 @@ public class RedisDao implements ScraperDaoInf {
                 .collect(Collectors.toList());
     }
 
-    public void indexScrapingInforamtion(final ScrapingInformation scrapingInformation,
-                                         final String clientId, final String jobId) {
+    public void indexScrapingInforamtion(final ScrapingInformation scrapingInformation) {
         scrapingInformation.getWebpages().forEach(webpage -> {
             if (webpage.getElementWithActions() != null) {
                 if (webpage.getUrlRegex() != null) {
-                    redissonClient.getMap(Constants.getUrlRegexMapName(clientId + jobId))
+                    redissonClient
+                            .getMap(Constants.getUrlRegexMapName(scrapingInformation.getClientId() +
+                                    scrapingInformation.getJobId()))
                             .put(webpage.getUrlRegex(), toPrettyJsonString(webpage.getElementWithActions()));
                 }
 
                 if (webpage.getUniqueTag() != null) {
-                    redissonClient.getMap(Constants.getUniqueTagMapName(clientId + jobId))
+                    redissonClient
+                            .getMap(Constants.getUniqueTagMapName(scrapingInformation.getClientId() +
+                                    scrapingInformation.getJobId()))
                             .put(webpage.getUniqueTag(), toPrettyJsonString(webpage.getElementWithActions()));
                 }
 
                 if (webpage.getUniqueStringOnPage() != null) {
-                    redissonClient.getMap(Constants.getUniqueStringMapName(clientId + jobId))
+                    redissonClient
+                            .getMap(Constants.getUniqueStringMapName(scrapingInformation.getClientId() +
+                                    scrapingInformation.getJobId()))
                             .put(webpage.getUniqueStringOnPage(), toPrettyJsonString(webpage.getElementWithActions()));
                 }
+            }
+        });
+
+        scrapingInformation.getRoots().forEach(root -> {
+            try {
+                URL url = new URL(root); //To validate the root URL
+                redissonClient
+                        .getSet(Constants.linksToScrapeSetName(scrapingInformation.getClientId() +
+                                scrapingInformation.getJobId()))
+                        .add(url.getHost() + url.getPath());
+            } catch (MalformedURLException e) {
+                System.out.println("The URL (" + root + ") given as root in scraping information is not a valid URL.");
+                e.printStackTrace();
             }
         });
     }

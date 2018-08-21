@@ -1,6 +1,5 @@
 package com.fastscraping.scraper;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fastscraping.dao.redis.RedisDao;
 import com.fastscraping.models.ElementWithActions;
 import com.fastscraping.util.JsonHelper;
@@ -26,12 +25,4 @@ public class ActionFilter {
                 .map(Optional::get)
                 .collect(Collectors.toList());
     }
-
-    public List<Boolean> addAcionsForLink(String link, List<ElementWithActions> elementsWithActions)
-            throws MalformedURLException {
-        System.out.println("Following is going to be saved in redis -- " + JsonHelper.toPrettyJsonString(elementsWithActions));
-
-        return redisDao.setLinkToAction(link, elementsWithActions);
-    }
-
 }

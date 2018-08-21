@@ -1,10 +1,10 @@
 package com.fastscraping.scraper;
 
-import com.fastscraping.models.ElementWithActions;
+import com.fastscraping.dao.redis.RedisDao;
+import com.fastscraping.models.ScrapingInformation;
 import org.openqa.selenium.JavascriptExecutor;
 
 import java.net.MalformedURLException;
-import java.util.List;
 
 public class WebpageScraper {
 
@@ -13,20 +13,22 @@ public class WebpageScraper {
     private final JavascriptExecutor jsExecutor;
     private final ActionExecutor actionExecutor;
     private final ActionFilter actionFilter;
+    private final RedisDao redisDao;
 
-    private WebpageScraper(SeleniumSetup seleniumSetup, String linkToScrape,
+    private WebpageScraper(SeleniumSetup seleniumSetup, String linkToScrape, RedisDao redisDao,
                            ActionExecutor actionExecutor, ActionFilter actionFilter) {
         this.seleniumSetup = seleniumSetup;
         this.linkToScrape = linkToScrape;
+        this.redisDao = redisDao;
         this.actionExecutor = actionExecutor;
         this.actionFilter = actionFilter;
 
         this.jsExecutor = (JavascriptExecutor) (this.seleniumSetup.getWebDriver());
     }
 
-    public void startScraping() throws MalformedURLException {
+    public void startScraping(ScrapingInformation scrapingInformation) throws MalformedURLException {
 
-        System.out.println("Starting the scraping..........");
+        redisDao.indexScrapingInforamtion(scrapingInformation);
 
         seleniumSetup.getWebDriver().get(linkToScrape);
 
@@ -44,21 +46,16 @@ public class WebpageScraper {
      */
     public static class WebpageScraperBuilder {
         private SeleniumSetup seleniumSetup;
-        private String linkToScrape;
         private ActionExecutor actionExecutor;
         private ActionFilter actionFilter;
+        private RedisDao redisDao;
 
         public WebpageScraperBuilder() {
-            
+
         }
 
         public WebpageScraperBuilder setWebpage(SeleniumSetup seleniumSetup) {
             this.seleniumSetup = seleniumSetup;
-            return this;
-        }
-
-        public WebpageScraperBuilder setLinkToScrape(String linkToScrape) {
-            this.linkToScrape = linkToScrape;
             return this;
         }
 
@@ -72,8 +69,14 @@ public class WebpageScraper {
             return this;
         }
 
+        public WebpageScraperBuilder setRedisDao(RedisDao redisDao) {
+            this.redisDao = redisDao;
+            return this;
+        }
+
         public WebpageScraper build() {
-            return new WebpageScraper(this.seleniumSetup, this.linkToScrape, this.actionExecutor, this.actionFilter);
+            return new WebpageScraper(this.seleniumSetup, this.redisDao,
+                    this.actionExecutor, this.actionFilter);
         }
     }
 }

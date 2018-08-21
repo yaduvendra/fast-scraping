@@ -14,33 +14,27 @@ import java.util.stream.Collectors;
 public class ActionExecutor {
 
     private final WebDriver driver;
-    private final JavascriptExecutor jsExecutor;
-    private final ScraperDaoInf scraperDao;
-    private final String rootURL;
-
     private final Actions seleniumActions;
 
-    private ActionExecutor(String rootURL, WebDriver driver, JavascriptExecutor jsExecutor, ScraperDaoInf scraperDao) {
-        this.rootURL = rootURL;
+    private ActionExecutor(WebDriver driver) {
         this.driver = driver;
-        this.jsExecutor = jsExecutor;
-        this.scraperDao = scraperDao;
-
         seleniumActions = new Actions(this.driver);
     }
 
-    void executeAction(ElementWithActions elementWithActions) {
+    void executeAction(ElementWithActions elementWithActions, ScraperDaoInf scraperDao, String urlToScrape, String clientId, String jobId) {
         String selector = elementWithActions.getSelector();
 
         elementWithActions.getActions().forEach(action -> {
-
-            System.out.println("Going to execute the action - " + action + " for root URL - " + rootURL);
-
+            System.out.println("Going to execute the action - " + action + " for root URL - " + urlToScrape);
             switch (action) {
-                case HOVER: hoverElement(selector); break;
-                case CLICK: clickElement(selector); break;
-                case DELETE_ELEMENT: deleteElememt(selector); break;
-                case GRAB_LINKS_TO_SCRAPE: scraperDao.saveLinksToScrape(rootURL, grabLinksToScrape(selector)); break;
+                case HOVER: hoverElement(selector);
+                    break;
+                case CLICK: clickElement(selector);
+                    break;
+                case DELETE_ELEMENT: deleteElememt(selector);
+                    break;
+                case GRAB_LINKS_TO_SCRAPE: scraperDao.saveLinksToScrape(clientId, jobId, grabLinksToScrape(selector));
+                    break;
             }
         });
     }
@@ -60,6 +54,7 @@ public class ActionExecutor {
 
     private void deleteElememt(String selector) {
         String scriptToDelete = " document.querySelector('"+ selector +"').remove();";
+        JavascriptExecutor jsExecutor = (JavascriptExecutor) driver;
         jsExecutor.executeScript("return" + scriptToDelete);
     }
 
@@ -82,32 +77,14 @@ public class ActionExecutor {
      */
     public static class ActionExecutorBuilder {
         private WebDriver driver;
-        private JavascriptExecutor jsExecutor;
-        private ScraperDaoInf scraperDao;
-        private String rootURL;
 
         public ActionExecutorBuilder setDriver(WebDriver driver) {
             this.driver = driver;
             return this;
         }
 
-        public ActionExecutorBuilder setRootURL(String rootURL) {
-            this.rootURL = rootURL;
-            return this;
-        }
-
-        public ActionExecutorBuilder setJSExecutor(JavascriptExecutor jsExecutor) {
-            this.jsExecutor = jsExecutor;
-            return this;
-        }
-
-        public ActionExecutorBuilder setScraperDao(ScraperDaoInf scraperDao) {
-            this.scraperDao = scraperDao;
-            return this;
-        }
-
         public ActionExecutor build() {
-            return new ActionExecutor(this.rootURL, this.driver, this.jsExecutor, this.scraperDao);
+            return new ActionExecutor(this.driver);
         }
     }
 }

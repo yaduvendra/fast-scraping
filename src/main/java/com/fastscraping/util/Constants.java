@@ -11,6 +11,8 @@ public class Constants {
     private static final String uniqueTagMapName = "uniqueTagMap";
     private static final String uniqueStringMapName = "uniqueStringMap";
 
+    private static final String linksToScrape = "linksToScrape";
+
     public static synchronized String getUrlRegexMapName(String uniqueIdentifier) {
         return urlRegexMapName + uniqueIdentifier;
     }
@@ -21,6 +23,10 @@ public class Constants {
 
     public static synchronized String getUniqueStringMapName(String uniqueIdentifier) {
         return uniqueStringMapName + uniqueIdentifier;
+    }
+
+    public static synchronized String linksToScrapeSetName(String uniqueIdentifier) {
+        return linksToScrape + uniqueIdentifier;
     }
 
 }
