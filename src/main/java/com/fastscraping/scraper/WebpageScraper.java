@@ -5,40 +5,55 @@ import com.fastscraping.models.ScrapingInformation;
 import org.openqa.selenium.JavascriptExecutor;
 
 import java.net.MalformedURLException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class WebpageScraper {
 
+    private final ExecutorService executor;
     private final SeleniumSetup seleniumSetup;
-    private final String linkToScrape;
     private final JavascriptExecutor jsExecutor;
     private final ActionExecutor actionExecutor;
     private final ActionFilter actionFilter;
     private final RedisDao redisDao;
 
-    private WebpageScraper(SeleniumSetup seleniumSetup, String linkToScrape, RedisDao redisDao,
-                           ActionExecutor actionExecutor, ActionFilter actionFilter) {
+    private WebpageScraper(SeleniumSetup seleniumSetup, RedisDao redisDao,
+                           ActionExecutor actionExecutor, ActionFilter actionFilter, int numberOfThreads) {
         this.seleniumSetup = seleniumSetup;
-        this.linkToScrape = linkToScrape;
         this.redisDao = redisDao;
         this.actionExecutor = actionExecutor;
         this.actionFilter = actionFilter;
+        this.executor = Executors.newFixedThreadPool(numberOfThreads);
 
         this.jsExecutor = (JavascriptExecutor) (this.seleniumSetup.getWebDriver());
     }
 
-    public void startScraping(ScrapingInformation scrapingInformation) throws MalformedURLException {
+    public void startScraping(ScrapingInformation scrapingInformation) {
+        executor.execute(new Worker(scrapingInformation));
+    }
 
-        redisDao.indexScrapingInforamtion(scrapingInformation);
+    private class Worker implements Runnable {
 
-        seleniumSetup.getWebDriver().get(linkToScrape);
+        private ScrapingInformation scrapingInformation;
 
-        System.out.println("The browser opened.......");
+        private Worker(ScrapingInformation scrapingInformation) {
+            this.scrapingInformation  = scrapingInformation;
+        }
 
-        actionFilter.getActionsByLink(linkToScrape).forEach(actionExecutor::executeAction);
+        @Override
+        public void run() {
+            redisDao.indexScrapingInforamtion(scrapingInformation);
+            seleniumSetup.getWebDriver().get(linkToScrape);
+            try {
+                actionFilter.getActionsByLink(linkToScrape).forEach(elementWithAction -> {
+                    actionExecutor.executeAction(elementWithAction, redisDao, linkToScrape, "", "");
+                });
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
+            }
 
-        System.out.println("Done with the actions on the page .........");
-
-        seleniumSetup.getWebDriver().close();
+            seleniumSetup.getWebDriver().close();
+        }
     }
 
     /**
@@ -49,6 +64,7 @@ public class WebpageScraper {
         private ActionExecutor actionExecutor;
         private ActionFilter actionFilter;
         private RedisDao redisDao;
+        private int numberOfThreads;
 
         public WebpageScraperBuilder() {
 
@@ -75,8 +91,12 @@ public class WebpageScraper {
         }
 
         public WebpageScraper build() {
-            return new WebpageScraper(this.seleniumSetup, this.redisDao,
-                    this.actionExecutor, this.actionFilter);
+            return new WebpageScraper(
+                    this.seleniumSetup,
+                    this.redisDao,
+                    this.actionExecutor,
+                    this.actionFilter,
+                    this.numberOfThreads);
         }
     }
 }

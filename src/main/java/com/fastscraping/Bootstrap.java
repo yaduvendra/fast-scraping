@@ -50,10 +50,11 @@ public class Bootstrap {
             BufferedReader bufReader = new BufferedReader(new FileReader(scrapingInformationJson));
 
 
-            bufReader.lines().reduce((x, y) -> x + y + "\n").ifPresent(json -> {
+            bufReader.lines().reduce((JSON, nextLine) -> JSON + nextLine + "\n").ifPresent(json -> {
                 try {
                     ScrapingInformation scrapingInfo = JsonHelper.getObjectFromJson(json, ScrapingInformation.class);
-                    scraper.startScraping(scrapingInfo);
+                    //TODO: Add the scraping information to the Redis and (NoSQL/SQL DB, when persist database is setup)
+                    //TODO: Send the clientId and Job ID to the ScrapeLinksPoller
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
