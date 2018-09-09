@@ -10,12 +10,14 @@ import java.util.concurrent.TimeUnit;
 public class ScrapeLinksPoller {
 
     private final static ScrapeLinksPollerLock SCRAPE_LINKS_POLLER_LOCK = new ScrapeLinksPollerLock();
-    private static ScrapeLinksPoller singletonInstance = null;
+    private static ScrapeLinksPoller sscrapeLinksPoller = null;
 
+    private final WebpageScraper webpageScraper;
     private final ScraperDaoInf scraperDao;
     private final ScheduledExecutorService executor;
 
-    private ScrapeLinksPoller(ScraperDaoInf scraperDao, int numberOfThreads) {
+    private ScrapeLinksPoller(WebpageScraper webpageScraper, ScraperDaoInf scraperDao, int numberOfThreads) {
+        this.webpageScraper = webpageScraper;
         this.scraperDao = scraperDao;
         this.executor = Executors.newScheduledThreadPool(numberOfThreads);
     }
@@ -36,17 +38,18 @@ public class ScrapeLinksPoller {
         @Override
         public void run() {
             List<String> polledLinks =  scraperDao.getLinksToScrape(clientId, jobId);
-        //TODO: Send these links with client and job information to the client to threadpool managing the scraping work
+            webpageScraper.scrapeNewLinks(polledLinks, clientId, jobId);
         }
     }
 
-    public static ScrapeLinksPoller getSingletonInstance(ScraperDaoInf scraperDao, int numberOfThreads) {
+    public static ScrapeLinksPoller getSingletonInstance(WebpageScraper webpageScraper, ScraperDaoInf scraperDao,
+                                                         int numberOfThreads) {
         synchronized (SCRAPE_LINKS_POLLER_LOCK) {
-            if (singletonInstance == null) {
-                singletonInstance = new ScrapeLinksPoller(scraperDao, numberOfThreads);
+            if (sscrapeLinksPoller == null) {
+                sscrapeLinksPoller = new ScrapeLinksPoller(webpageScraper, scraperDao, numberOfThreads);
             }
         }
-        return singletonInstance;
+        return sscrapeLinksPoller;
     }
 
     private static class ScrapeLinksPollerLock {}
