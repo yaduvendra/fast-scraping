@@ -38,12 +38,15 @@ public class RedisDao implements ScraperDaoInf {
 
     @Override
     public List<String> getLinksToScrape(final String clientId, final String jobId) {
-        synchronized (redissonClient) {
-            return redissonClient.getSet(Constants.linksToScrapeSetName(clientId + jobId))
-                    .readAll().stream()
-                    .map(valueObj -> (String) valueObj)
-                    .collect(Collectors.toList());
-        }
+        return redissonClient.getSet(Constants.linksToScrapeSetName(clientId + jobId))
+                .readAll().stream()
+                .map(valueObj -> (String) valueObj)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public int getNumberOfBrowser(String clientId, String jobId) {
+        return 0;
     }
 
     public List<Optional<ElementWithActions>> getElementsWithActionsByLink(final String link)

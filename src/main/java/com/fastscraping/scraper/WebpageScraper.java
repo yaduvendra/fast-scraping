@@ -1,7 +1,6 @@
 package com.fastscraping.scraper;
 
 import com.fastscraping.dao.ScraperDaoInf;
-import org.openqa.selenium.JavascriptExecutor;
 
 import java.net.MalformedURLException;
 import java.util.List;
@@ -15,58 +14,34 @@ public class WebpageScraper {
 
     private final ExecutorService executorService;
 
-    private final SeleniumSetup seleniumSetup;
-    private final JavascriptExecutor jsExecutor;
-    private final ActionExecutor actionExecutor;
-    private final ActionFilter actionFilter;
     private final ScraperDaoInf scraperDao;
 
-    private WebpageScraper(SeleniumSetup seleniumSetup, ScraperDaoInf scraperDao,
-                           ActionExecutor actionExecutor, ActionFilter actionFilter, int numberOfThreads) {
-
-        this.seleniumSetup = seleniumSetup;
+    private WebpageScraper(ScraperDaoInf scraperDao, int numberOfThreads) {
         this.scraperDao = scraperDao;
-        this.actionExecutor = actionExecutor;
-        this.actionFilter = actionFilter;
-
         this.executorService = Executors.newFixedThreadPool(numberOfThreads);
-        this.jsExecutor = (JavascriptExecutor) (this.seleniumSetup.getWebDriver());
     }
 
-    private WebpageScraper(SeleniumSetup seleniumSetup, ScraperDaoInf scraperDao, ActionExecutor actionExecutor,
-                           ActionFilter actionFilter, ExecutorService executorService) {
-
-        this.seleniumSetup = seleniumSetup;
+    private WebpageScraper(ScraperDaoInf scraperDao, ExecutorService executorService) {
         this.scraperDao = scraperDao;
-        this.actionExecutor = actionExecutor;
-        this.actionFilter = actionFilter;
-
         this.executorService = executorService;
-        this.jsExecutor = (JavascriptExecutor) (this.seleniumSetup.getWebDriver());
     }
 
     /**
      * The singleton builder of the WebpageScraper
      */
-    public static WebpageScraper getSingletonWebpageScraper(SeleniumSetup seleniumSetup, ScraperDaoInf scraperDao,
-                                                            ActionExecutor actionExecutor, ActionFilter actionFilter,
-                                                            int numberOfThreads) {
+    public static WebpageScraper getSingletonWebpageScraper(ScraperDaoInf scraperDao, int numberOfThreads) {
         synchronized (SINGLETON_WEBPAGE_SCRAPER_LOCK) {
             if (singletonWebpageScraper == null) {
-                singletonWebpageScraper = new WebpageScraper(seleniumSetup, scraperDao, actionExecutor, actionFilter,
-                        numberOfThreads);
+                singletonWebpageScraper = new WebpageScraper(scraperDao, numberOfThreads);
             }
         }
         return singletonWebpageScraper;
     }
 
-    public static WebpageScraper getSingletonWebpageScraper(SeleniumSetup seleniumSetup, ScraperDaoInf scraperDao,
-                                                            ActionExecutor actionExecutor, ActionFilter actionFilter,
-                                                            ExecutorService executorService) {
+    public static WebpageScraper getSingletonWebpageScraper(ScraperDaoInf scraperDao, ExecutorService executorService) {
         synchronized (SINGLETON_WEBPAGE_SCRAPER_LOCK) {
             if (singletonWebpageScraper == null) {
-                singletonWebpageScraper = new WebpageScraper(seleniumSetup, scraperDao, actionExecutor, actionFilter,
-                        executorService);
+                singletonWebpageScraper = new WebpageScraper(scraperDao, executorService);
             }
         }
         return singletonWebpageScraper;

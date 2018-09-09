@@ -1,5 +1,6 @@
 package com.fastscraping;
 
+import com.fastscraping.dao.ScraperDaoInf;
 import com.fastscraping.dao.redis.RedisDao;
 import com.fastscraping.dao.redis.RedissonConfig;
 import com.fastscraping.models.ScrapingInformation;
@@ -18,28 +19,32 @@ public class Bootstrap {
 
         System.setProperty("webdriver.gecko.driver", "/opt/geckodriver");
 
-        RedisDao redisDao = new RedisDao(new RedissonConfig());
-        WebpageScraper scraper = null;
+        ScraperDaoInf scraperDao = new RedisDao(new RedissonConfig());
+        WebDriverKeeper webDriverKeeper = new WebDriverKeeper();
+        WebpageScraper scraper = WebpageScraper.getSingletonWebpageScraper(scraperDao, 100);
 
         try {
 
             File scrapingInformationJson = new File("/home/ashish/scraping_information.json");
             BufferedReader bufReader = new BufferedReader(new FileReader(scrapingInformationJson));
 
-            ScrapeLinksPoller scrapeLinksPoller = ScrapeLinksPoller.getSingletonInstance(scraper, redisDao, 100);
+            ScrapeLinksPoller scrapeLinksPoller = ScrapeLinksPoller.getSingletonInstance(scraper, scraperDao, 100);
 
             bufReader.lines().reduce((JSON, nextLine) -> JSON + nextLine + "\n").ifPresent(json -> {
                 try {
                     ScrapingInformation scrapingInfo = JsonHelper.getObjectFromJson(json, ScrapingInformation.class);
 
-                    /** Index the scrapingInformation in the Redis and clientId and jobId to the scrapeLinkPoller */
-                    redisDao.indexScrapingInforamtion(scrapingInfo);
+                    /** Add the WebDriver's to start the scraping */
+                    webDriverKeeper.addWebDrivers(scrapingInfo.getClientId(), scrapingInfo.getJobId(),
+                            scrapingInfo.getNumberOfBrowsers());
+                    /** Index the ScrapingInformation in the DB */
+                    scraperDao.indexScrapingInforamtion(scrapingInfo);
+                    /** Send the clientId and jobId to the ScrapeLinkPoller so that it polls the links to scrape */
                     scrapeLinksPoller.addClientJob(scrapingInfo.getClientId(), scrapingInfo.getJobId());
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
             });
-
 
         } catch (FileNotFoundException e) {
             e.printStackTrace();
