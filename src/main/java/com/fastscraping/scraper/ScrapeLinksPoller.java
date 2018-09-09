@@ -9,16 +9,18 @@ import java.util.concurrent.TimeUnit;
 
 public class ScrapeLinksPoller {
 
-    private final ScraperDaoInf scraperDao;
+    private final static ScrapeLinksPollerLock SCRAPE_LINKS_POLLER_LOCK = new ScrapeLinksPollerLock();
+    private static ScrapeLinksPoller singletonInstance = null;
 
+    private final ScraperDaoInf scraperDao;
     private final ScheduledExecutorService executor;
 
-    public ScrapeLinksPoller(ScraperDaoInf scraperDao, int numberOfThreads) {
+    private ScrapeLinksPoller(ScraperDaoInf scraperDao, int numberOfThreads) {
         this.scraperDao = scraperDao;
         this.executor = Executors.newScheduledThreadPool(numberOfThreads);
     }
 
-    public void addClientJob(String clientId, String jobId) {
+    public void addClientJob(final String clientId, final String jobId) {
         executor.scheduleAtFixedRate(new PollWorker(clientId, jobId), 5L, 2L, TimeUnit.SECONDS);
     }
 
@@ -38,4 +40,14 @@ public class ScrapeLinksPoller {
         }
     }
 
+    public static ScrapeLinksPoller getSingletonInstance(ScraperDaoInf scraperDao, int numberOfThreads) {
+        synchronized (SCRAPE_LINKS_POLLER_LOCK) {
+            if (singletonInstance == null) {
+                singletonInstance = new ScrapeLinksPoller(scraperDao, numberOfThreads);
+            }
+        }
+        return singletonInstance;
+    }
+
+    private static class ScrapeLinksPollerLock {}
 }
