@@ -22,6 +22,10 @@ public class SeleniumSetup {
         }
     }
 
+    public int getMaxBrowsers() {
+        return maxBrowsers;
+    }
+
     public boolean addWebDriver(WebDriver driver) {
         if(webDrivers.size() < maxBrowsers) {
             return webDrivers.add(driver);

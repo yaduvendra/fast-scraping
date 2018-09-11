@@ -49,6 +49,7 @@ public class RedisDao implements ScraperDaoInf {
         return 0;
     }
 
+    @Override
     public List<Optional<ElementWithActions>> getElementsWithActionsByLink(final String link)
             throws MalformedURLException {
 

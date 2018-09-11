@@ -1,11 +1,15 @@
 package com.fastscraping.scraper;
 
 import com.fastscraping.dao.ScraperDaoInf;
+import org.openqa.selenium.WebDriver;
 
 import java.net.MalformedURLException;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+
+import static com.fastscraping.scraper.ActionExecutor.ActionExecutorBuilder;
 
 public class WebpageScraper {
 
@@ -71,17 +75,27 @@ public class WebpageScraper {
 
             System.out.println("Scraping the links for client - " + clientId + ", jobId - " + jobId);
 
+            ActionFilter actionFilter = new ActionFilter(scraperDao);
+
             newLinks.forEach(linkToScrape -> {
                         try {
-                            seleniumSetup.getWebDriver().get(linkToScrape);
+                            Optional<WebDriver> webDriverOptional = WebDriverKeeper.getWebDriver(clientId, jobId);
+                            if (!webDriverOptional.isPresent()) {
+                                //TODO: Submit the job to be done at a scheduled interval till no webdriver is free
+                            } else {
+                                WebDriver driver = webDriverOptional.get();
+                                driver.get(linkToScrape);
+                                ActionExecutor actionExecutor = new ActionExecutorBuilder().setDriver(driver).build();
 
-                            actionFilter.getActionsByLink(linkToScrape)
-                                    .forEach(elementWithAction -> actionExecutor.executeAction(elementWithAction,
-                                            scraperDao, linkToScrape, clientId, jobId));
+                                actionFilter.getActionsByLink(linkToScrape)
+                                        .forEach(elementWithAction -> actionExecutor.executeAction(elementWithAction,
+                                                scraperDao, linkToScrape, clientId, jobId));
+
+                                WebDriverKeeper.addBackWebDriver(clientId, jobId, driver);
+                            }
                         } catch (MalformedURLException e) {
                             e.printStackTrace();
                         }
-                        seleniumSetup.getWebDriver().close();
                     }
             );
         }

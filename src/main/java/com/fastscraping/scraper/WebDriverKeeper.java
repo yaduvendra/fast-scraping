@@ -6,17 +6,20 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class WebDriverKeeper {
-    private final ConcurrentHashMap<String, SeleniumSetup> keeper = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<String, SeleniumSetup> keeper = new ConcurrentHashMap<>();
 
     public WebDriverKeeper() {
     }
 
-    public void addWebDrivers(final String clientId, final String jobId, final int maxInstances) {
-        String clientIdJobId = clientId + "/" + jobId;
-        keeper.put(clientIdJobId, new SeleniumSetup(maxInstances));
+    public static int addWebDrivers(final String clientId, final String jobId, final int maxInstances) {
+        return keeper.put(clientId + "/" + jobId, new SeleniumSetup(maxInstances)).getMaxBrowsers();
     }
 
-    public Optional<WebDriver> getWebDriver(final String clientId, final String jobId) {
+    public static boolean addBackWebDriver(final String clientId, final String jobId, final WebDriver driver) {
+        return keeper.get(clientId + "/" + jobId).addWebDriver(driver);
+    }
+
+    public static Optional<WebDriver> getWebDriver(final String clientId, final String jobId) {
         String clientIdJobId = clientId + "/" + jobId;
         if (keeper.containsKey(clientIdJobId)) {
             return keeper.get(clientIdJobId).getWebDriver();
