@@ -52,6 +52,7 @@ public class WebpageScraper {
     }
 
     public void scrapeNewLinks(List<String> newLinks, String clientId, String jobId) {
+        System.out.println("Scraping new links.");
         executorService.execute(new Worker(newLinks, clientId, jobId));
     }
 

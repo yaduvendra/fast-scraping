@@ -23,6 +23,7 @@ public class ScrapeLinksPoller {
     }
 
     public void addClientJob(final String clientId, final String jobId) {
+        System.out.println("Adding the client's scheduled job. Initial Delay: " + 5 + " seconds." + " Period: " + 2 + " seconds");
         executor.scheduleAtFixedRate(new PollWorker(clientId, jobId), 5L, 2L, TimeUnit.SECONDS);
     }
 
@@ -37,8 +38,11 @@ public class ScrapeLinksPoller {
 
         @Override
         public void run() {
+            System.out.println("Running the scheduled job.");
             List<String> polledLinks =  scraperDao.getLinksToScrape(clientId, jobId);
+            System.out.println("Received the links to poll. Total are - " + polledLinks.size());
             webpageScraper.scrapeNewLinks(polledLinks, clientId, jobId);
+            System.out.println("Sent the links to the Scraper to be scraped.");
         }
     }
 

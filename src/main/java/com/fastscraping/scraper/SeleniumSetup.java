@@ -5,7 +5,6 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.firefox.FirefoxDriver;
 
 import java.util.Optional;
-import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class SeleniumSetup {
@@ -16,10 +15,11 @@ public class SeleniumSetup {
     public SeleniumSetup(final int maxBrowsers) {
         this.maxBrowsers = maxBrowsers;
         this.webDrivers = new ConcurrentLinkedQueue<>();
-
+        System.out.println("ConcurrentLinkedQueue has been created for SeleniumSetup.");
         for(int i = 0; i < maxBrowsers; i++) {
             webDrivers.add(new FirefoxDriver());
         }
+        System.out.println(maxBrowsers + " drivers of FirefoxDriver have benn added.");
     }
 
     public int getMaxBrowsers() {

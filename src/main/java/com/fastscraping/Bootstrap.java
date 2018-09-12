@@ -20,7 +20,6 @@ public class Bootstrap {
         System.setProperty("webdriver.gecko.driver", "/opt/geckodriver");
 
         ScraperDaoInf scraperDao = new RedisDao(new RedissonConfig());
-        WebDriverKeeper webDriverKeeper = new WebDriverKeeper();
         WebpageScraper scraper = WebpageScraper.getSingletonWebpageScraper(scraperDao, 100);
 
         try {
@@ -35,7 +34,7 @@ public class Bootstrap {
                     ScrapingInformation scrapingInfo = JsonHelper.getObjectFromJson(json, ScrapingInformation.class);
 
                     /** Add the WebDriver's to start the scraping */
-                    webDriverKeeper.addWebDrivers(scrapingInfo.getClientId(), scrapingInfo.getJobId(),
+                    WebDriverKeeper.addWebDrivers(scrapingInfo.getClientId(), scrapingInfo.getJobId(),
                             scrapingInfo.getNumberOfBrowsers());
                     /** Index the ScrapingInformation in the DB */
                     scraperDao.indexScrapingInforamtion(scrapingInfo);
@@ -46,7 +45,11 @@ public class Bootstrap {
                 }
             });
 
+            Thread.sleep(10000);
+
         } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
             e.printStackTrace();
         } finally {
             System.exit(1);

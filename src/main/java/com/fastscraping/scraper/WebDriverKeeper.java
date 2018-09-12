@@ -12,7 +12,11 @@ public class WebDriverKeeper {
     }
 
     public static int addWebDrivers(final String clientId, final String jobId, final int maxInstances) {
-        return keeper.put(clientId + "/" + jobId, new SeleniumSetup(maxInstances)).getMaxBrowsers();
+        System.out.println("Adding the web drivers to the web driver keeper.");
+        SeleniumSetup seleniumSetup = new SeleniumSetup(maxInstances);
+        WebDriverKeeper.keeper.put(clientId + "/" + jobId, seleniumSetup);
+        System.out.println("SeleniumSetup has been added to the WebDriverKeeper with " + maxInstances + " drivers.");
+        return seleniumSetup.getMaxBrowsers();
     }
 
     public static boolean addBackWebDriver(final String clientId, final String jobId, final WebDriver driver) {
