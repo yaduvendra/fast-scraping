@@ -35,7 +35,7 @@ public class RedisUtils {
     }
 
     public static String encodeRedisKey(final String key) {
-        synchronized(staticEncodeDecodeLock) {
+        synchronized (staticEncodeDecodeLock) {
 
             final char[] charactersInKey = key.toCharArray();
             int keyLength = charactersInKey.length;
@@ -64,7 +64,7 @@ public class RedisUtils {
             int index = 0;
 
             for (; index < keyLength; index++) {
-                if(decodeMap.containsKey(splittedKey[index])) {
+                if (decodeMap.containsKey(splittedKey[index])) {
                     decodedString.append(decodeMap.get(splittedKey[index]));
                 } else {
                     decodedString.append(splittedKey[index]);

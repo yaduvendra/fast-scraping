@@ -27,13 +27,17 @@ public class ActionExecutor {
         elementWithActions.getActions().forEach(action -> {
             System.out.println("Going to execute the action - " + action + " for root URL - " + urlToScrape);
             switch (action) {
-                case HOVER: hoverElement(selector);
+                case HOVER:
+                    hoverElement(selector);
                     break;
-                case CLICK: clickElement(selector);
+                case CLICK:
+                    clickElement(selector);
                     break;
-                case DELETE_ELEMENT: deleteElememt(selector);
+                case DELETE_ELEMENT:
+                    deleteElememt(selector);
                     break;
-                case GRAB_LINKS_TO_SCRAPE: scraperDao.addLinksToScrape(clientId, jobId, grabLinksToScrape(selector));
+                case GRAB_LINKS_TO_SCRAPE:
+                    scraperDao.addLinksToScrape(clientId, jobId, grabLinksToScrape(selector));
                     break;
             }
         });
@@ -53,7 +57,7 @@ public class ActionExecutor {
     }
 
     private void deleteElememt(String selector) {
-        String scriptToDelete = " document.querySelector('"+ selector +"').remove();";
+        String scriptToDelete = " document.querySelector('" + selector + "').remove();";
         JavascriptExecutor jsExecutor = (JavascriptExecutor) driver;
         jsExecutor.executeScript("return" + scriptToDelete);
     }

@@ -36,7 +36,7 @@ public class WebDriverKeeper {
     }
 
     public synchronized static boolean clearEntries(final String clientId, final String jobId) {
-        if(!keeper.containsKey(clientId + "/" + jobId)) {
+        if (!keeper.containsKey(clientId + "/" + jobId)) {
             return true;
         } else {
             int initialSize = keeper.size();

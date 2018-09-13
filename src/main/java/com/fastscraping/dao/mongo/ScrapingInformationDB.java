@@ -97,7 +97,7 @@ public class ScrapingInformationDB {
                 }
         );
 
-        if(links.size() > 0) {
+        if (links.size() > 0) {
             inMemoryDao.addLinksToScrape(clientId, jobId, links);
         } else {
             //TODO: Start shutdown process when no link is found for scraping

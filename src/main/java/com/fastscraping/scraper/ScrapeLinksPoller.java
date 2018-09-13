@@ -25,9 +25,22 @@ public class ScrapeLinksPoller {
         this.persistentDb = persistentDb;
     }
 
+    public static ScrapeLinksPoller getSingletonInstance(WebpageScraper webpageScraper, InMemoryDaoInf scraperDao,
+                                                         PersistentDaoInf persistentDb) {
+        synchronized (SCRAPE_LINKS_POLLER_LOCK) {
+            if (scrapeLinksPoller == null) {
+                scrapeLinksPoller = new ScrapeLinksPoller(webpageScraper, scraperDao, persistentDb);
+            }
+        }
+        return scrapeLinksPoller;
+    }
+
     public void addClientJob(final String clientId, final String jobId) {
         System.out.println("Adding the client's scheduled job. Initial Delay: " + 5 + " seconds." + " Period: " + 2 + " seconds");
         executor.scheduleAtFixedRate(new PollWorker(clientId, jobId), 5L, 2L, TimeUnit.SECONDS);
+    }
+
+    private static class ScrapeLinksPollerLock {
     }
 
     private class PollWorker implements Runnable {
@@ -42,9 +55,9 @@ public class ScrapeLinksPoller {
         @Override
         public void run() {
             System.out.println("Running the scheduled job.");
-            List<String> polledLinks =  inMemoryDb.getLinksToScrape(clientId, jobId);
+            List<String> polledLinks = inMemoryDb.getLinksToScrape(clientId, jobId);
 
-            if(polledLinks.size() == 0) {
+            if (polledLinks.size() == 0) {
                 persistentDb.getUnscrapedLinksInMemory(clientId, jobId); //This will put the links in the in-memory db
                 return;
             }
@@ -54,16 +67,4 @@ public class ScrapeLinksPoller {
             System.out.println("Sent the links to the Scraper to be scraped.");
         }
     }
-
-    public static ScrapeLinksPoller getSingletonInstance(WebpageScraper webpageScraper, InMemoryDaoInf scraperDao,
-                                                         PersistentDaoInf persistentDb) {
-        synchronized (SCRAPE_LINKS_POLLER_LOCK) {
-            if (scrapeLinksPoller == null) {
-                scrapeLinksPoller = new ScrapeLinksPoller(webpageScraper, scraperDao, persistentDb);
-            }
-        }
-        return scrapeLinksPoller;
-    }
-
-    private static class ScrapeLinksPollerLock {}
 }

@@ -16,7 +16,7 @@ public class JsonHelper {
         objectMapper.setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY);
     }
 
-    public static synchronized String toJsonString(Object object)  {
+    public static synchronized String toJsonString(Object object) {
         try {
             return objectMapper.writer().writeValueAsString(object);
         } catch (JsonProcessingException e) {

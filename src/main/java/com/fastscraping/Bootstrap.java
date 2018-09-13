@@ -6,7 +6,9 @@ import com.fastscraping.dao.mongo.MongoDao;
 import com.fastscraping.dao.redis.RedisDao;
 import com.fastscraping.dao.redis.RedissonConfig;
 import com.fastscraping.models.ScrapingInformation;
-import com.fastscraping.scraper.*;
+import com.fastscraping.scraper.ScrapeLinksPoller;
+import com.fastscraping.scraper.WebDriverKeeper;
+import com.fastscraping.scraper.WebpageScraper;
 import com.fastscraping.util.JsonHelper;
 import com.mongodb.ServerAddress;
 

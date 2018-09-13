@@ -24,7 +24,9 @@ import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
 
 public class MongoDao implements PersistentDaoInf {
 
-    /** Keep only one mongo client whole application wide */
+    /**
+     * Keep only one mongo client whole application wide
+     */
     private final MongoClient mongoClient;
     private final ScrapingInformationDB scrapingInformationDB;
     private final InMemoryDaoInf inMemoryDao;
@@ -73,7 +75,7 @@ public class MongoDao implements PersistentDaoInf {
 
     public void addLinksToScrape(String clientId, String jobId, List<String> links) {
         mongoDBExecutor.execute(() -> {
-             scrapingInformationDB.addLinksToScrape(clientId, jobId, links);
+            scrapingInformationDB.addLinksToScrape(clientId, jobId, links);
         });
     }
 

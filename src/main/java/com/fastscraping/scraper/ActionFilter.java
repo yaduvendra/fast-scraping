@@ -12,7 +12,7 @@ public class ActionFilter {
 
     private final InMemoryDaoInf scraperDao;
 
-    public ActionFilter(InMemoryDaoInf scraperDao){
+    public ActionFilter(InMemoryDaoInf scraperDao) {
         this.scraperDao = scraperDao;
     }
 

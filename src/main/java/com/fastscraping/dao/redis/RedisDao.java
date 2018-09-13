@@ -28,7 +28,8 @@ public class RedisDao implements InMemoryDaoInf {
     }
 
     @Override
-    public List<Boolean> addLinksToScrape(final String clientId, final String jobId, List<String> links) {
+    public List<Boolean>
+    addLinksToScrape(final String clientId, final String jobId, List<String> links) {
         return links.stream()
                 .map(link -> {
                     try {
