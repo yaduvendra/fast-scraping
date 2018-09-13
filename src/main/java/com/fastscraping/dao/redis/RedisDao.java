@@ -4,7 +4,6 @@ import com.fastscraping.dao.ScraperDaoInf;
 import com.fastscraping.models.ElementWithActions;
 import com.fastscraping.models.ScrapingInformation;
 import com.fastscraping.util.Constants;
-import com.fastscraping.util.RedisUtils;
 import org.redisson.api.RQueue;
 import org.redisson.api.RedissonClient;
 
@@ -15,7 +14,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static com.fastscraping.util.JsonHelper.*;
+import static com.fastscraping.util.JsonHelper.getObjectFromJson;
+import static com.fastscraping.util.JsonHelper.toPrettyJsonString;
 
 public class RedisDao implements ScraperDaoInf {
 
@@ -31,8 +31,14 @@ public class RedisDao implements ScraperDaoInf {
     public List<Boolean> saveLinksToScrape(final String clientId, final String jobId, List<String> links) {
         return links.stream()
                 .map(link -> {
-                    synchronized (redissonClient) {
-                        return redissonClient.getQueue(Constants.linksToScrapeSetName(clientId + jobId)).add(link);
+                    try {
+                        URL url = new URL(link);
+                        return redissonClient
+                                .getQueue(Constants.linksToScrapeSetName(clientId + jobId))
+                                .add(url.toString());
+                    } catch (MalformedURLException e) {
+                        e.printStackTrace();
+                        return false;
                     }
                 })
                 .collect(Collectors.toList());
@@ -40,11 +46,10 @@ public class RedisDao implements ScraperDaoInf {
 
     @Override
     public List<String> getLinksToScrape(final String clientId, final String jobId) {
-         RQueue<String> queue = redissonClient.getQueue(Constants.linksToScrapeSetName(clientId + jobId));
-         List<String> queuedLinks = queue.readAll();
-         queue.clear();
-
-         return queuedLinks;
+        RQueue<String> queue = redissonClient.getQueue(Constants.linksToScrapeSetName(clientId + jobId));
+        List<String> queueElements = queue.readAll();
+        queue.clear();
+        return queueElements;
     }
 
     @Override
@@ -59,7 +64,7 @@ public class RedisDao implements ScraperDaoInf {
         URL urlKey = new URL(link);
 
         return redissonClient
-                .getSet(RedisUtils.encodeRedisKey(urlKey.getHost() + urlKey.getPath())).readAll()
+                .getSet(urlKey.getHost() + urlKey.getPath()).readAll()
                 .stream()
                 .map(elementWithActObj -> {
                     try {
@@ -78,22 +83,22 @@ public class RedisDao implements ScraperDaoInf {
             if (webpage.getElementWithActions() != null) {
                 if (webpage.getUrlRegex() != null) {
                     redissonClient
-                            .getMap(RedisUtils.encodeRedisKey(Constants.getUrlRegexMapName(scrapingInformation.getClientId() +
-                                    scrapingInformation.getJobId())))
+                            .getMap(Constants.getUrlRegexMapName(scrapingInformation.getClientId() +
+                                    scrapingInformation.getJobId()))
                             .put(webpage.getUrlRegex(), toPrettyJsonString(webpage.getElementWithActions()));
                 }
 
                 if (webpage.getUniqueTag() != null) {
                     redissonClient
-                            .getMap(RedisUtils.encodeRedisKey(Constants.getUniqueTagMapName(scrapingInformation.getClientId() +
-                                    scrapingInformation.getJobId())))
+                            .getMap(Constants.getUniqueTagMapName(scrapingInformation.getClientId() +
+                                    scrapingInformation.getJobId()))
                             .put(webpage.getUniqueTag(), toPrettyJsonString(webpage.getElementWithActions()));
                 }
 
                 if (webpage.getUniqueStringOnPage() != null) {
                     redissonClient
-                            .getMap(RedisUtils.encodeRedisKey(Constants.getUniqueStringMapName(scrapingInformation.getClientId() +
-                                    scrapingInformation.getJobId())))
+                            .getMap(Constants.getUniqueStringMapName(scrapingInformation.getClientId() +
+                                    scrapingInformation.getJobId()))
                             .put(webpage.getUniqueStringOnPage(), toPrettyJsonString(webpage.getElementWithActions()));
                 }
             }

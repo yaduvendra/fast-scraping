@@ -14,19 +14,19 @@ public class Constants {
     private static final String linksToScrape = "linksToScrape";
 
     public static synchronized String getUrlRegexMapName(String uniqueIdentifier) {
-        return urlRegexMapName + uniqueIdentifier;
+        return RedisUtils.encodeRedisKey(urlRegexMapName + uniqueIdentifier);
     }
 
     public static synchronized String getUniqueTagMapName(String uniqueIdentifier) {
-        return uniqueTagMapName + uniqueIdentifier;
+        return RedisUtils.encodeRedisKey(uniqueTagMapName + uniqueIdentifier);
     }
 
     public static synchronized String getUniqueStringMapName(String uniqueIdentifier) {
-        return uniqueStringMapName + uniqueIdentifier;
+        return RedisUtils.encodeRedisKey(uniqueStringMapName + uniqueIdentifier);
     }
 
     public static synchronized String linksToScrapeSetName(String uniqueIdentifier) {
-        return linksToScrape + uniqueIdentifier;
+        return RedisUtils.encodeRedisKey(linksToScrape + uniqueIdentifier);
     }
 
 }

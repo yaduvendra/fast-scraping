@@ -4,12 +4,15 @@ import com.fastscraping.dao.ScraperDaoInf;
 import org.openqa.selenium.WebDriver;
 
 import java.net.MalformedURLException;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import static com.fastscraping.scraper.ActionExecutor.ActionExecutorBuilder;
+import static com.fastscraping.util.ScraperThreadPools.fixedThreadPoolExecutor;
+import static com.fastscraping.util.ScraperThreadPools.scheduledExecutor;
 
 public class WebpageScraper {
 
@@ -20,9 +23,9 @@ public class WebpageScraper {
 
     private final ScraperDaoInf scraperDao;
 
-    private WebpageScraper(ScraperDaoInf scraperDao, int numberOfThreads) {
+    private WebpageScraper(ScraperDaoInf scraperDao) {
         this.scraperDao = scraperDao;
-        this.executorService = Executors.newFixedThreadPool(numberOfThreads);
+        this.executorService = fixedThreadPoolExecutor;
     }
 
     private WebpageScraper(ScraperDaoInf scraperDao, ExecutorService executorService) {
@@ -33,10 +36,10 @@ public class WebpageScraper {
     /**
      * The singleton builder of the WebpageScraper
      */
-    public static WebpageScraper getSingletonWebpageScraper(ScraperDaoInf scraperDao, int numberOfThreads) {
+    public static WebpageScraper getSingletonWebpageScraper(ScraperDaoInf scraperDao) {
         synchronized (SINGLETON_WEBPAGE_SCRAPER_LOCK) {
             if (singletonWebpageScraper == null) {
-                singletonWebpageScraper = new WebpageScraper(scraperDao, numberOfThreads);
+                singletonWebpageScraper = new WebpageScraper(scraperDao);
             }
         }
         return singletonWebpageScraper;
@@ -78,27 +81,36 @@ public class WebpageScraper {
 
             ActionFilter actionFilter = new ActionFilter(scraperDao);
 
+            LinkedList<String> unscrapedLinks = new LinkedList<>();
+
             newLinks.forEach(linkToScrape -> {
-                        try {
-                            Optional<WebDriver> webDriverOptional = WebDriverKeeper.getWebDriver(clientId, jobId);
-                            if (!webDriverOptional.isPresent()) {
-                                //TODO: Submit the job to be done at a scheduled interval till no webdriver is free
-                            } else {
+                        Optional<WebDriver> webDriverOptional = WebDriverKeeper.getWebDriver(clientId, jobId);
+                        if (!webDriverOptional.isPresent()) {
+                            unscrapedLinks.add(linkToScrape);
+                        } else {
+                            executorService.execute(() -> {
                                 WebDriver driver = webDriverOptional.get();
                                 driver.get(linkToScrape);
                                 ActionExecutor actionExecutor = new ActionExecutorBuilder().setDriver(driver).build();
 
-                                actionFilter.getActionsByLink(linkToScrape)
-                                        .forEach(elementWithAction -> actionExecutor.executeAction(elementWithAction,
-                                                scraperDao, linkToScrape, clientId, jobId));
-
+                                try {
+                                    actionFilter.getActionsByLink(linkToScrape).forEach(elementWithAction ->
+                                            actionExecutor.executeAction(elementWithAction, scraperDao, linkToScrape,
+                                                    clientId, jobId));
+                                } catch (MalformedURLException e) {
+                                    e.printStackTrace();
+                                }
                                 WebDriverKeeper.addBackWebDriver(clientId, jobId, driver);
-                            }
-                        } catch (MalformedURLException e) {
-                            e.printStackTrace();
+                            });
                         }
                     }
             );
+
+            /** The links which are left because of unavailability of drivers, will be scraped after 2 seconds */
+            if (unscrapedLinks.size() > 0) {
+                scheduledExecutor.schedule(new Worker(unscrapedLinks, clientId, jobId), 2, TimeUnit.SECONDS);
+            }
         }
     }
+
 }

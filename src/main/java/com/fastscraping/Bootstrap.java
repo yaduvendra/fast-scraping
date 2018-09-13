@@ -20,14 +20,14 @@ public class Bootstrap {
         System.setProperty("webdriver.gecko.driver", "/opt/geckodriver");
 
         ScraperDaoInf scraperDao = new RedisDao(new RedissonConfig());
-        WebpageScraper scraper = WebpageScraper.getSingletonWebpageScraper(scraperDao, 100);
+        WebpageScraper scraper = WebpageScraper.getSingletonWebpageScraper(scraperDao);
 
         try {
 
             File scrapingInformationJson = new File("/home/ashish/scraping_information.json");
             BufferedReader bufReader = new BufferedReader(new FileReader(scrapingInformationJson));
 
-            ScrapeLinksPoller scrapeLinksPoller = ScrapeLinksPoller.getSingletonInstance(scraper, scraperDao, 100);
+            ScrapeLinksPoller scrapeLinksPoller = ScrapeLinksPoller.getSingletonInstance(scraper, scraperDao);
 
             bufReader.lines().reduce((JSON, nextLine) -> JSON + nextLine + "\n").ifPresent(json -> {
                 try {
@@ -45,7 +45,7 @@ public class Bootstrap {
                 }
             });
 
-            Thread.sleep(10000);
+            Thread.sleep(1000000);
 
         } catch (FileNotFoundException e) {
             e.printStackTrace();

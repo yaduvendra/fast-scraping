@@ -10,27 +10,27 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 public class SeleniumSetup {
 
     private final ConcurrentLinkedQueue<WebDriver> webDrivers;
-    private final int maxBrowsers;
+    private final int maxDrivers;
 
-    public SeleniumSetup(final int maxBrowsers) {
-        this.maxBrowsers = maxBrowsers;
+    public SeleniumSetup(final int maxDrivers) {
+        this.maxDrivers = maxDrivers;
         this.webDrivers = new ConcurrentLinkedQueue<>();
         System.out.println("ConcurrentLinkedQueue has been created for SeleniumSetup.");
-        for(int i = 0; i < maxBrowsers; i++) {
+        for(int i = 0; i < maxDrivers; i++) {
             webDrivers.add(new FirefoxDriver());
         }
-        System.out.println(maxBrowsers + " drivers of FirefoxDriver have benn added.");
+        System.out.println(maxDrivers + " drivers of FirefoxDriver have benn added.");
     }
 
-    public int getMaxBrowsers() {
-        return maxBrowsers;
+    public int getMaxDrivers() {
+        return maxDrivers;
     }
 
     public boolean addWebDriver(WebDriver driver) {
-        if(webDrivers.size() < maxBrowsers) {
+        if(webDrivers.size() < maxDrivers) {
             return webDrivers.add(driver);
         } else {
-            throw new MaxBrowsersExceededException("The number of browsers " + maxBrowsers + " already exist.");
+            throw new MaxBrowsersExceededException("The number of browsers " + maxDrivers + " already exist.");
         }
     }
 
@@ -40,5 +40,10 @@ public class SeleniumSetup {
         } else {
             return Optional.of(webDrivers.remove());
         }
+    }
+
+    public boolean clearAll() {
+        webDrivers.clear();
+        return webDrivers.size() == 0;
     }
 }

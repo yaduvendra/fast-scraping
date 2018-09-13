@@ -1,6 +1,7 @@
 package com.fastscraping.scraper;
 
 import com.fastscraping.dao.ScraperDaoInf;
+import com.fastscraping.util.ScraperThreadPools;
 
 import java.util.List;
 import java.util.concurrent.Executors;
@@ -16,10 +17,10 @@ public class ScrapeLinksPoller {
     private final ScraperDaoInf scraperDao;
     private final ScheduledExecutorService executor;
 
-    private ScrapeLinksPoller(WebpageScraper webpageScraper, ScraperDaoInf scraperDao, int numberOfThreads) {
+    private ScrapeLinksPoller(WebpageScraper webpageScraper, ScraperDaoInf scraperDao) {
         this.webpageScraper = webpageScraper;
         this.scraperDao = scraperDao;
-        this.executor = Executors.newScheduledThreadPool(numberOfThreads);
+        this.executor = ScraperThreadPools.scheduledExecutor;
     }
 
     public void addClientJob(final String clientId, final String jobId) {
@@ -46,11 +47,10 @@ public class ScrapeLinksPoller {
         }
     }
 
-    public static ScrapeLinksPoller getSingletonInstance(WebpageScraper webpageScraper, ScraperDaoInf scraperDao,
-                                                         int numberOfThreads) {
+    public static ScrapeLinksPoller getSingletonInstance(WebpageScraper webpageScraper, ScraperDaoInf scraperDao) {
         synchronized (SCRAPE_LINKS_POLLER_LOCK) {
             if (sscrapeLinksPoller == null) {
-                sscrapeLinksPoller = new ScrapeLinksPoller(webpageScraper, scraperDao, numberOfThreads);
+                sscrapeLinksPoller = new ScrapeLinksPoller(webpageScraper, scraperDao);
             }
         }
         return sscrapeLinksPoller;
