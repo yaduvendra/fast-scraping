@@ -30,32 +30,7 @@ public class ElementWithActions {
         return actions;
     }
 
-
-    /**
-     * The builder of the ElementWithActions class.
-     */
-    public static class ElementWithActionsBuilder {
-        private String selector;
-        private List<ActionName> actions;
-        private List<DataToExtract> dataToExtract;
-
-        public ElementWithActionsBuilder setSelector(String selector) {
-            this.selector = selector;
-            return this;
-        }
-
-        public ElementWithActionsBuilder setActions(List<ActionName> actions) {
-            this.actions = actions;
-            return this;
-        }
-
-        public ElementWithActionsBuilder setDataToExtract(List<DataToExtract> dataToExtract) {
-            this.dataToExtract = dataToExtract;
-            return this;
-        }
-
-        public ElementWithActions build() {
-            return new ElementWithActions(selector, actions, dataToExtract);
-        }
+    public List<DataToExtract> getDataToExtract() {
+        return dataToExtract;
     }
 }

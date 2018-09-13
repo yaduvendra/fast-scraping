@@ -1,6 +1,6 @@
 package com.fastscraping.dao.redis;
 
-import com.fastscraping.dao.ScraperDaoInf;
+import com.fastscraping.dao.InMemoryDaoInf;
 import com.fastscraping.models.ElementWithActions;
 import com.fastscraping.models.ScrapingInformation;
 import com.fastscraping.util.Constants;
@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 import static com.fastscraping.util.JsonHelper.getObjectFromJson;
 import static com.fastscraping.util.JsonHelper.toPrettyJsonString;
 
-public class RedisDao implements ScraperDaoInf {
+public class RedisDao implements InMemoryDaoInf {
 
     private final RedissonConfig redissonConfig;
     private final RedissonClient redissonClient;
@@ -28,7 +28,7 @@ public class RedisDao implements ScraperDaoInf {
     }
 
     @Override
-    public List<Boolean> saveLinksToScrape(final String clientId, final String jobId, List<String> links) {
+    public List<Boolean> addLinksToScrape(final String clientId, final String jobId, List<String> links) {
         return links.stream()
                 .map(link -> {
                     try {
@@ -77,7 +77,7 @@ public class RedisDao implements ScraperDaoInf {
                 .collect(Collectors.toList());
     }
 
-    public void indexScrapingInforamtion(final ScrapingInformation scrapingInformation) {
+    public void addScrapingInforamtion(final ScrapingInformation scrapingInformation) {
         System.out.println("Going to add the Scraping Information to the Redis.");
         scrapingInformation.getWebpages().forEach(webpage -> {
             if (webpage.getElementWithActions() != null) {
@@ -120,6 +120,10 @@ public class RedisDao implements ScraperDaoInf {
                 e.printStackTrace();
             }
         });
+    }
+
+    public void closeDBConnection() {
+        redissonClient.shutdown();
     }
 
 }

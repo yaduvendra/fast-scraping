@@ -8,7 +8,6 @@ public class ScraperThreadPools {
 
     public static final ScheduledExecutorService scheduledExecutor = Executors.newScheduledThreadPool(100);
     public static final ExecutorService fixedThreadPoolExecutor = Executors.newFixedThreadPool(100);
-
-
+    public static final ExecutorService mongoDBExecutor = Executors.newCachedThreadPool();
 
 }

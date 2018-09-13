@@ -1,7 +1,6 @@
 package com.fastscraping.scraper;
 
-import com.fastscraping.dao.ScraperDaoInf;
-import com.fastscraping.dao.redis.RedisDao;
+import com.fastscraping.dao.InMemoryDaoInf;
 import com.fastscraping.models.ElementWithActions;
 
 import java.net.MalformedURLException;
@@ -11,9 +10,9 @@ import java.util.stream.Collectors;
 
 public class ActionFilter {
 
-    private final ScraperDaoInf scraperDao;
+    private final InMemoryDaoInf scraperDao;
 
-    public ActionFilter(ScraperDaoInf scraperDao){
+    public ActionFilter(InMemoryDaoInf scraperDao){
         this.scraperDao = scraperDao;
     }
 

@@ -1,6 +1,6 @@
 package com.fastscraping.scraper;
 
-import com.fastscraping.dao.ScraperDaoInf;
+import com.fastscraping.dao.InMemoryDaoInf;
 import org.openqa.selenium.WebDriver;
 
 import java.net.MalformedURLException;
@@ -21,14 +21,14 @@ public class WebpageScraper {
 
     private final ExecutorService executorService;
 
-    private final ScraperDaoInf scraperDao;
+    private final InMemoryDaoInf scraperDao;
 
-    private WebpageScraper(ScraperDaoInf scraperDao) {
+    private WebpageScraper(InMemoryDaoInf scraperDao) {
         this.scraperDao = scraperDao;
         this.executorService = fixedThreadPoolExecutor;
     }
 
-    private WebpageScraper(ScraperDaoInf scraperDao, ExecutorService executorService) {
+    private WebpageScraper(InMemoryDaoInf scraperDao, ExecutorService executorService) {
         this.scraperDao = scraperDao;
         this.executorService = executorService;
     }
@@ -36,7 +36,7 @@ public class WebpageScraper {
     /**
      * The singleton builder of the WebpageScraper
      */
-    public static WebpageScraper getSingletonWebpageScraper(ScraperDaoInf scraperDao) {
+    public static WebpageScraper getSingletonWebpageScraper(InMemoryDaoInf scraperDao) {
         synchronized (SINGLETON_WEBPAGE_SCRAPER_LOCK) {
             if (singletonWebpageScraper == null) {
                 singletonWebpageScraper = new WebpageScraper(scraperDao);
@@ -45,7 +45,7 @@ public class WebpageScraper {
         return singletonWebpageScraper;
     }
 
-    public static WebpageScraper getSingletonWebpageScraper(ScraperDaoInf scraperDao, ExecutorService executorService) {
+    public static WebpageScraper getSingletonWebpageScraper(InMemoryDaoInf scraperDao, ExecutorService executorService) {
         synchronized (SINGLETON_WEBPAGE_SCRAPER_LOCK) {
             if (singletonWebpageScraper == null) {
                 singletonWebpageScraper = new WebpageScraper(scraperDao, executorService);
@@ -92,7 +92,6 @@ public class WebpageScraper {
                                 WebDriver driver = webDriverOptional.get();
                                 driver.get(linkToScrape);
                                 ActionExecutor actionExecutor = new ActionExecutorBuilder().setDriver(driver).build();
-
                                 try {
                                     actionFilter.getActionsByLink(linkToScrape).forEach(elementWithAction ->
                                             actionExecutor.executeAction(elementWithAction, scraperDao, linkToScrape,
