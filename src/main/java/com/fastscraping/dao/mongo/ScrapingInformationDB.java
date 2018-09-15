@@ -1,6 +1,6 @@
 package com.fastscraping.dao.mongo;
 
-import com.fastscraping.dao.InMemoryDaoInf;
+import com.fastscraping.dao.ScraperDaoInf;
 import com.fastscraping.models.ScrapingInformation;
 import com.mongodb.async.client.FindIterable;
 import com.mongodb.async.client.MongoClient;
@@ -77,7 +77,7 @@ public class ScrapingInformationDB {
                 });
     }
 
-    public void getUnscrapedLinksInMemory(String clientId, String jobId, InMemoryDaoInf inMemoryDao) {
+    public void getUnscrapedLinksInMemory(String clientId, String jobId, ScraperDaoInf inMemoryDao) {
 
         List<Bson> filters = new LinkedList<>();
 

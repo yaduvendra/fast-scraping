@@ -1,7 +1,7 @@
 package com.fastscraping.dao.mongo;
 
 
-import com.fastscraping.dao.InMemoryDaoInf;
+import com.fastscraping.dao.ScraperDaoInf;
 import com.fastscraping.dao.PersistentDaoInf;
 import com.fastscraping.models.ScrapingInformation;
 import com.mongodb.MongoClientSettings;
@@ -29,9 +29,9 @@ public class MongoDao implements PersistentDaoInf {
      */
     private final MongoClient mongoClient;
     private final ScrapingInformationDB scrapingInformationDB;
-    private final InMemoryDaoInf inMemoryDao;
+    private final ScraperDaoInf inMemoryDao;
 
-    public MongoDao(final List<ServerAddress> mongoNodes, final InMemoryDaoInf inMemoryDao) {
+    public MongoDao(final List<ServerAddress> mongoNodes, final ScraperDaoInf inMemoryDao) {
 
         /** Mention all the connection settings in the properties file */
 
@@ -87,6 +87,11 @@ public class MongoDao implements PersistentDaoInf {
         mongoDBExecutor.submit(() -> {
             scrapingInformationDB.getUnscrapedLinksInMemory(clientId, jobId, inMemoryDao);
         });
+    }
+
+    @Override
+    public List<String> getLinksToScrape(String clientId, String jobId) {
+        return null;
     }
 
     @Override

@@ -14,6 +14,8 @@ public interface PersistentDaoInf {
 
     void getUnscrapedLinksInMemory(String clientId, String jobId);
 
+    List<String> getLinksToScrape(String clientId, String jobId);
+
     void updateScrapedTrue(String clientId, String jobId, String job);
 
     void closeDBConnection();

@@ -1,6 +1,6 @@
 package com.fastscraping.scraper;
 
-import com.fastscraping.dao.InMemoryDaoInf;
+import com.fastscraping.dao.ScraperDaoInf;
 import com.fastscraping.models.ElementWithActions;
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
@@ -21,7 +21,7 @@ public class ActionExecutor {
         seleniumActions = new Actions(this.driver);
     }
 
-    void executeAction(ElementWithActions elementWithActions, InMemoryDaoInf scraperDao, String urlToScrape, String clientId, String jobId) {
+    void executeAction(ElementWithActions elementWithActions, ScraperDaoInf scraperDao, String urlToScrape, String clientId, String jobId) {
         String selector = elementWithActions.getSelector();
 
         elementWithActions.getActions().forEach(action -> {

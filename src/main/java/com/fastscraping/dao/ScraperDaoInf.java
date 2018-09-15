@@ -7,7 +7,8 @@ import java.net.MalformedURLException;
 import java.util.List;
 import java.util.Optional;
 
-public interface InMemoryDaoInf {
+public interface ScraperDaoInf {
+
     List<Boolean> addLinksToScrape(final String clientId, final String jobId, List<String> links);
 
     List<String> getLinksToScrape(final String clientId, final String jobId);

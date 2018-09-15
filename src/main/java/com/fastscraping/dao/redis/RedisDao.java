@@ -5,7 +5,6 @@ import com.fastscraping.models.ElementWithActions;
 import com.fastscraping.models.ScrapingInformation;
 import com.fastscraping.util.Constants;
 import org.redisson.api.RQueue;
-import org.redisson.api.RSet;
 import org.redisson.api.RedissonClient;
 
 import java.io.IOException;
@@ -68,18 +67,13 @@ public class RedisDao implements InMemoryDaoInf {
     }
 
     @Override
-    public int getNumberOfBrowser(String clientId, String jobId) {
-        return 0;
-    }
-
-    @Override
     public List<Optional<ElementWithActions>> getElementsWithActionsByLink(final String link)
             throws MalformedURLException {
 
         URL urlKey = new URL(link);
 
-        return redissonClient
-                .getSet(urlKey.getHost() + urlKey.getPath()).readAll()
+        return redissonClient.getSet(urlKey.getHost() + urlKey.getPath())
+                .readAll()
                 .stream()
                 .map(elementWithActObj -> {
                     try {

@@ -1,6 +1,6 @@
 package com.fastscraping;
 
-import com.fastscraping.dao.InMemoryDaoInf;
+import com.fastscraping.dao.ScraperDaoInf;
 import com.fastscraping.dao.PersistentDaoInf;
 import com.fastscraping.dao.mongo.MongoDao;
 import com.fastscraping.dao.redis.RedisDao;
@@ -29,7 +29,7 @@ public class Bootstrap {
         final List<ServerAddress> mongoNodes = new LinkedList<>();
         mongoNodes.add(new ServerAddress("localhost"));
 
-        InMemoryDaoInf inMemoryDao = new RedisDao(new RedissonConfig());
+        ScraperDaoInf inMemoryDao = new RedisDao(new RedissonConfig());
         PersistentDaoInf persistentDao = new MongoDao(mongoNodes, inMemoryDao);
         WebpageScraper scraper = WebpageScraper.getSingletonWebpageScraper(inMemoryDao);
 

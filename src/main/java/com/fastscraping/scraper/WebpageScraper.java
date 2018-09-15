@@ -1,6 +1,6 @@
 package com.fastscraping.scraper;
 
-import com.fastscraping.dao.InMemoryDaoInf;
+import com.fastscraping.dao.ScraperDaoInf;
 import org.openqa.selenium.WebDriver;
 
 import java.net.MalformedURLException;
@@ -21,22 +21,22 @@ public class WebpageScraper {
 
     private final ExecutorService executorService;
 
-    private final InMemoryDaoInf inMemoryDaoInf;
+    private final ScraperDaoInf scraperDaoInf;
 
-    private WebpageScraper(InMemoryDaoInf inMemoryDaoInf) {
-        this.inMemoryDaoInf = inMemoryDaoInf;
+    private WebpageScraper(ScraperDaoInf scraperDaoInf) {
+        this.scraperDaoInf = scraperDaoInf;
         this.executorService = fixedThreadPoolExecutor;
     }
 
-    private WebpageScraper(InMemoryDaoInf inMemoryDaoInf, ExecutorService executorService) {
-        this.inMemoryDaoInf = inMemoryDaoInf;
+    private WebpageScraper(ScraperDaoInf scraperDaoInf, ExecutorService executorService) {
+        this.scraperDaoInf = scraperDaoInf;
         this.executorService = executorService;
     }
 
     /**
      * The singleton builder of the WebpageScraper
      */
-    public static WebpageScraper getSingletonWebpageScraper(InMemoryDaoInf scraperDao) {
+    public static WebpageScraper getSingletonWebpageScraper(ScraperDaoInf scraperDao) {
         synchronized (SINGLETON_WEBPAGE_SCRAPER_LOCK) {
             if (singletonWebpageScraper == null) {
                 singletonWebpageScraper = new WebpageScraper(scraperDao);
@@ -45,7 +45,7 @@ public class WebpageScraper {
         return singletonWebpageScraper;
     }
 
-    public static WebpageScraper getSingletonWebpageScraper(InMemoryDaoInf scraperDao, ExecutorService executorService) {
+    public static WebpageScraper getSingletonWebpageScraper(ScraperDaoInf scraperDao, ExecutorService executorService) {
         synchronized (SINGLETON_WEBPAGE_SCRAPER_LOCK) {
             if (singletonWebpageScraper == null) {
                 singletonWebpageScraper = new WebpageScraper(scraperDao, executorService);
@@ -79,7 +79,7 @@ public class WebpageScraper {
 
             System.out.println("Scraping the links for client - " + clientId + ", jobId - " + jobId);
 
-            ActionFilter actionFilter = new ActionFilter(inMemoryDaoInf);
+            ActionFilter actionFilter = new ActionFilter(scraperDaoInf);
 
             LinkedList<String> unscrapedLinks = new LinkedList<>();
 
@@ -96,12 +96,12 @@ public class WebpageScraper {
                                     ActionExecutor actionExecutor = new ActionExecutorBuilder().setDriver(driver).build();
 
                                     actionFilter.getActionsByLink(linkToScrape).forEach(elementWithAction ->
-                                            actionExecutor.executeAction(elementWithAction, inMemoryDaoInf, linkToScrape,
+                                            actionExecutor.executeAction(elementWithAction, scraperDaoInf, linkToScrape,
                                                     clientId, jobId));
                                 } catch (MalformedURLException e) {
                                     e.printStackTrace();
                                 } finally {
-                                    inMemoryDaoInf.addToScrapedLinks(linkToScrape, clientId, jobId);
+                                    scraperDaoInf.addToScrapedLinks(linkToScrape, clientId, jobId);
                                     WebDriverKeeper.addBackWebDriver(clientId, jobId, driver);
                                 }
                             });

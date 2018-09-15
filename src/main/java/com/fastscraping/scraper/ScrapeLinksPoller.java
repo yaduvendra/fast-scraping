@@ -1,6 +1,6 @@
 package com.fastscraping.scraper;
 
-import com.fastscraping.dao.InMemoryDaoInf;
+import com.fastscraping.dao.ScraperDaoInf;
 import com.fastscraping.dao.PersistentDaoInf;
 import com.fastscraping.util.ScraperThreadPools;
 
@@ -14,18 +14,18 @@ public class ScrapeLinksPoller {
     private static ScrapeLinksPoller scrapeLinksPoller = null;
 
     private final WebpageScraper webpageScraper;
-    private final InMemoryDaoInf inMemoryDb;
+    private final ScraperDaoInf inMemoryDb;
     private final ScheduledExecutorService executor;
     private final PersistentDaoInf persistentDb;
 
-    private ScrapeLinksPoller(WebpageScraper webpageScraper, InMemoryDaoInf inMemoryDb, PersistentDaoInf persistentDb) {
+    private ScrapeLinksPoller(WebpageScraper webpageScraper, ScraperDaoInf inMemoryDb, PersistentDaoInf persistentDb) {
         this.webpageScraper = webpageScraper;
         this.inMemoryDb = inMemoryDb;
         this.executor = ScraperThreadPools.scheduledExecutor;
         this.persistentDb = persistentDb;
     }
 
-    public static ScrapeLinksPoller getSingletonInstance(WebpageScraper webpageScraper, InMemoryDaoInf scraperDao,
+    public static ScrapeLinksPoller getSingletonInstance(WebpageScraper webpageScraper, ScraperDaoInf scraperDao,
                                                          PersistentDaoInf persistentDb) {
         synchronized (SCRAPE_LINKS_POLLER_LOCK) {
             if (scrapeLinksPoller == null) {
