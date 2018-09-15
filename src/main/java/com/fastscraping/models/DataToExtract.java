@@ -25,4 +25,24 @@ public class DataToExtract {
         this.text = text;
         this.image = image;
     }
+
+    public String getStorageKeyName() {
+        return storageKeyName;
+    }
+
+    public String getSelector() {
+        return selector;
+    }
+
+    public List<String> getAttributes() {
+        return attributes;
+    }
+
+    public boolean isText() {
+        return text;
+    }
+
+    public boolean isImage() {
+        return image;
+    }
 }

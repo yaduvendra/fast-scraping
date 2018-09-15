@@ -1,7 +1,7 @@
 package com.fastscraping.scraper;
 
 import com.fastscraping.dao.ScraperDaoInf;
-import com.fastscraping.models.ElementWithActions;
+import com.fastscraping.models.ActionsAndData;
 
 import java.net.MalformedURLException;
 import java.util.List;
@@ -16,7 +16,7 @@ public class ActionFilter {
         this.scraperDao = scraperDao;
     }
 
-    public List<ElementWithActions> getActionsByLink(String link) throws MalformedURLException {
+    public List<ActionsAndData> getActionsByLink(String link) throws MalformedURLException {
 
         return scraperDao.getElementsWithActionsByLink(link)
                 .stream()

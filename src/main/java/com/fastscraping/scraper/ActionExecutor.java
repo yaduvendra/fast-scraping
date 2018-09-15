@@ -1,7 +1,7 @@
 package com.fastscraping.scraper;
 
 import com.fastscraping.dao.ScraperDaoInf;
-import com.fastscraping.models.ElementWithActions;
+import com.fastscraping.models.ActionsAndData;
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
@@ -21,10 +21,15 @@ public class ActionExecutor {
         seleniumActions = new Actions(this.driver);
     }
 
-    void executeAction(ElementWithActions elementWithActions, ScraperDaoInf scraperDao, String urlToScrape, String clientId, String jobId) {
-        String selector = elementWithActions.getSelector();
+    void executeAction(ActionsAndData actionsAndData,
+                       ScraperDaoInf scraperDao,
+                       String urlToScrape,
+                       String clientId,
+                       String jobId) {
 
-        elementWithActions.getActions().forEach(action -> {
+        String selector = actionsAndData.getSelector();
+
+        actionsAndData.getActions().forEach(action -> {
             System.out.println("Going to execute the action - " + action + " for root URL - " + urlToScrape);
             switch (action) {
                 case HOVER:
@@ -39,8 +44,41 @@ public class ActionExecutor {
                 case GRAB_LINKS_TO_SCRAPE:
                     scraperDao.addLinksToScrape(clientId, jobId, grabLinksToScrape(selector));
                     break;
+                case GRAB_LINKS_IN_GRID_TO_SCRAPE:
+                    scraperDao.addLinksToScrape(clientId, jobId, grabLinksFromGridToScrape(selector));
+                    break;
             }
         });
+
+        actionsAndData.getDataToExtract().forEach(dataToExtract -> {
+            String storageKeyName = dataToExtract.getStorageKeyName();
+            String selectorOfData = dataToExtract.getSelector();
+            List<String> attributesToScrape = dataToExtract.getAttributes();
+            boolean dataIsText = dataToExtract.isText();
+            boolean dataIsImage = dataToExtract.isImage();
+
+            String scrapedText = "";
+            String imageUrl = "";
+
+            if(dataIsText) {
+                scrapedText += scrapeText(selector);
+            } else if(dataIsImage) {
+
+            }
+        });
+    }
+
+    /**
+     * Data scraping of the elements depending on the CSS selector
+     */
+
+    private String scrapeText(String selector) {
+        WebElement webElement = driver.findElement(By.cssSelector(selector));
+        return webElement.getText();
+    }
+
+    private String scrapeImage(String selector) {
+        return "";
     }
 
     /**
@@ -60,6 +98,17 @@ public class ActionExecutor {
         String scriptToDelete = " document.querySelector('" + selector + "').remove();";
         JavascriptExecutor jsExecutor = (JavascriptExecutor) driver;
         jsExecutor.executeScript("return" + scriptToDelete);
+    }
+
+    private List<String> grabLinksFromGridToScrape(String selector) {
+
+        return driver.findElements(By.cssSelector(selector)).stream().flatMap(webElement -> {
+            List<WebElement> linkElements = getAllDescendents(webElement, "a");
+
+            return linkElements.stream()
+                    .map(linkWebElement -> linkWebElement.getAttribute("href"));
+
+        }).collect(Collectors.toList());
     }
 
     private List<String> grabLinksToScrape(String selector) {

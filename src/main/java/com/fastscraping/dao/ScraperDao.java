@@ -1,6 +1,6 @@
 package com.fastscraping.dao;
 
-import com.fastscraping.models.ElementWithActions;
+import com.fastscraping.models.ActionsAndData;
 import com.fastscraping.models.ScrapingInformation;
 
 import java.net.MalformedURLException;
@@ -56,17 +56,25 @@ public class ScraperDao implements ScraperDaoInf {
     }
 
     @Override
-    public List<Optional<ElementWithActions>> getElementsWithActionsByLink(String link) throws MalformedURLException {
-        return inMemeoryDao.getElementsWithActionsByLink(link);
+    public List<Optional<ActionsAndData>> getElementsWithActionsByLink(String link) throws MalformedURLException {
+        List<Optional<ActionsAndData>> elementsWithActions = inMemeoryDao.getElementsWithActionsByLink(link);
+
+        if(elementsWithActions.size() == 0) {
+            return persistentDao.getElementsWithActionsByLink(link);
+        } else{
+            return elementsWithActions;
+        }
     }
 
     @Override
     public void closeDBConnection() {
+        persistentDao.closeDBConnection();
         inMemeoryDao.closeDBConnection();
     }
 
     @Override
     public boolean addToScrapedLinks(String link, String clientId, String jobId) {
-        return inMemeoryDao.addToScrapedLinks(link, clientId, jobId);
+        return persistentDao.addToScrapedLinks(link, clientId, jobId) && //Add this link to both databases
+                inMemeoryDao.addToScrapedLinks(link, clientId, jobId);
     }
 }

@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.List;
 
-public class ElementWithActions {
+public class ActionsAndData {
 
     private final String selector;
     private final List<ActionName> actions;
@@ -13,9 +13,9 @@ public class ElementWithActions {
 
 
     @JsonCreator
-    public ElementWithActions(@JsonProperty("selector") String selector,
-                              @JsonProperty("actions") List<ActionName> actions,
-                              @JsonProperty("dataToExtract") List<DataToExtract> dataToExtract
+    public ActionsAndData(@JsonProperty("selector") String selector,
+                          @JsonProperty("actions") List<ActionName> actions,
+                          @JsonProperty("dataToExtract") List<DataToExtract> dataToExtract
                               ) {
         this.selector = selector;
         this.actions = actions;

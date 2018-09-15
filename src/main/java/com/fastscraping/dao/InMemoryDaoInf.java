@@ -1,6 +1,6 @@
 package com.fastscraping.dao;
 
-import com.fastscraping.models.ElementWithActions;
+import com.fastscraping.models.ActionsAndData;
 import com.fastscraping.models.ScrapingInformation;
 
 import java.net.MalformedURLException;
@@ -14,7 +14,7 @@ public interface InMemoryDaoInf {
 
     void addScrapingInforamtion(ScrapingInformation scrapingInfo);
 
-    List<Optional<ElementWithActions>> getElementsWithActionsByLink(String link) throws MalformedURLException;
+    List<Optional<ActionsAndData>> getElementsWithActionsByLink(String link) throws MalformedURLException;
 
     void closeDBConnection();
 
