@@ -77,4 +77,9 @@ public class ScraperDao implements ScraperDaoInf {
         return persistentDao.addToScrapedLinks(link, clientId, jobId) && //Add this link to both databases
                 inMemeoryDao.addToScrapedLinks(link, clientId, jobId);
     }
+
+    @Override
+    public boolean addScrapedData(String database, String dataKey, String data) {
+        return persistentDao.saveSrapedData(database, dataKey, data);
+    }
 }

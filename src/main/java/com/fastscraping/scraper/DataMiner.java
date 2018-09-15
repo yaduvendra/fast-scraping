@@ -11,26 +11,26 @@ import org.openqa.selenium.interactions.Actions;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class ActionExecutor {
+public class DataMiner {
 
     private final WebDriver driver;
     private final Actions seleniumActions;
 
-    private ActionExecutor(WebDriver driver) {
+    private DataMiner(WebDriver driver) {
         this.driver = driver;
         seleniumActions = new Actions(this.driver);
     }
 
-    void executeAction(ActionsAndData actionsAndData,
-                       ScraperDaoInf scraperDao,
-                       String urlToScrape,
-                       String clientId,
-                       String jobId) {
+    void mineData(ActionsAndData actionsAndData,
+                  ScraperDaoInf scraperDao,
+                  String urlToScrape,
+                  String clientId,
+                  String jobId) {
 
         String selector = actionsAndData.getSelector();
 
         actionsAndData.getActions().forEach(action -> {
-            System.out.println("Going to execute the action - " + action + " for root URL - " + urlToScrape);
+            System.out.println("Going to execute the action - " + action + " for URL - " + urlToScrape);
             switch (action) {
                 case HOVER:
                     hoverElement(selector);
@@ -51,6 +51,9 @@ public class ActionExecutor {
         });
 
         actionsAndData.getDataToExtract().forEach(dataToExtract -> {
+
+            System.out.println("Going to extract data for the URL " + urlToScrape);
+
             String storageKeyName = dataToExtract.getStorageKeyName();
             String selectorOfData = dataToExtract.getSelector();
             List<String> attributesToScrape = dataToExtract.getAttributes();
@@ -62,9 +65,11 @@ public class ActionExecutor {
 
             if(dataIsText) {
                 scrapedText += scrapeText(selector);
+                scraperDao.addScrapedData(dataToExtract.getDatabase(), storageKeyName, scrapedText);
             } else if(dataIsImage) {
-
+                //Download the image.
             }
+
         });
     }
 
@@ -83,6 +88,8 @@ public class ActionExecutor {
 
     /**
      * Actions to be executed on the DOM elements
+     *
+     * TODO:: Use jQuery to hover over elements.
      */
 
     private void hoverElement(String selector) {
@@ -126,7 +133,7 @@ public class ActionExecutor {
 
 
     /**
-     * The builder for the ActionExecutor class
+     * The builder for the DataMiner class
      */
     public static class ActionExecutorBuilder {
         private WebDriver driver;
@@ -136,8 +143,8 @@ public class ActionExecutor {
             return this;
         }
 
-        public ActionExecutor build() {
-            return new ActionExecutor(this.driver);
+        public DataMiner build() {
+            return new DataMiner(this.driver);
         }
     }
 }

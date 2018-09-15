@@ -9,7 +9,7 @@ import java.util.Optional;
 import java.util.concurrent.Future;
 
 public interface PersistentDaoInf {
-    Future<List<Boolean>> addScrapingInforamtion(ScrapingInformation information);
+    void addScrapingInforamtion(ScrapingInformation information);
 
     void addScrapingInforamtion(String jsonDoc, String clientId, String jobId);
 
@@ -26,4 +26,6 @@ public interface PersistentDaoInf {
     void closeDBConnection();
 
     boolean addToScrapedLinks(String link, String clientId, String jobId);
+
+    boolean saveSrapedData(String database, String key, String data);
 }

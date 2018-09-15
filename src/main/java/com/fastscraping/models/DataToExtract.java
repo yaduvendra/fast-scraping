@@ -12,18 +12,21 @@ public class DataToExtract {
     private final List<String> attributes;
     private final boolean text;
     private final boolean image;
+    private final String database;
 
     @JsonCreator
     public DataToExtract(@JsonProperty("storageKeyName") String storageKeyName,
                          @JsonProperty("selector") String selector,
                          @JsonProperty("attributes") List<String> attributes,
                          @JsonProperty("text") boolean text,
-                         @JsonProperty("image") boolean image) {
+                         @JsonProperty("image") boolean image,
+                         @JsonProperty("database") String database) {
         this.storageKeyName = storageKeyName;
         this.selector = selector;
         this.attributes = attributes;
         this.text = text;
         this.image = image;
+        this.database = database;
     }
 
     public String getStorageKeyName() {
@@ -40,6 +43,10 @@ public class DataToExtract {
 
     public boolean isText() {
         return text;
+    }
+
+    public String getDatabase() {
+        return database;
     }
 
     public boolean isImage() {

@@ -10,7 +10,7 @@ import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import static com.fastscraping.scraper.ActionExecutor.ActionExecutorBuilder;
+import static com.fastscraping.scraper.DataMiner.ActionExecutorBuilder;
 import static com.fastscraping.util.ScraperThreadPools.fixedThreadPoolExecutor;
 import static com.fastscraping.util.ScraperThreadPools.scheduledExecutor;
 
@@ -93,10 +93,10 @@ public class WebpageScraper {
 
                                 try {
                                     driver.get(linkToScrape);
-                                    ActionExecutor actionExecutor = new ActionExecutorBuilder().setDriver(driver).build();
+                                    DataMiner dataMiner = new ActionExecutorBuilder().setDriver(driver).build();
 
                                     actionFilter.getActionsByLink(linkToScrape).forEach(elementWithAction ->
-                                            actionExecutor.executeAction(elementWithAction, scraperDaoInf, linkToScrape,
+                                            dataMiner.mineData(elementWithAction, scraperDaoInf, linkToScrape,
                                                     clientId, jobId));
                                 } catch (MalformedURLException e) {
                                     e.printStackTrace();

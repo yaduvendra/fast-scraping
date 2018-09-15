@@ -21,4 +21,6 @@ public interface ScraperDaoInf {
     void closeDBConnection();
 
     boolean addToScrapedLinks(final String link, final String clientId, final String jobId);
+
+    boolean addScrapedData(final String database, final String dataKey, final String data);
 }

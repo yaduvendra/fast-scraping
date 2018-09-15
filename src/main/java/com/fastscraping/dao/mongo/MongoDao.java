@@ -3,6 +3,7 @@ package com.fastscraping.dao.mongo;
 
 import com.fastscraping.dao.ScraperDaoInf;
 import com.fastscraping.dao.PersistentDaoInf;
+import com.fastscraping.models.ActionsAndData;
 import com.fastscraping.models.ScrapingInformation;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.ServerAddress;
@@ -14,7 +15,9 @@ import com.mongodb.connection.netty.NettyStreamFactoryFactory;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.pojo.PojoCodecProvider;
 
+import java.net.MalformedURLException;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
@@ -59,11 +62,10 @@ public class MongoDao implements PersistentDaoInf {
         this.inMemoryDao = inMemoryDao;
     }
 
-    public final Future<List<Boolean>> addScrapingInforamtion(ScrapingInformation information) {
-        return mongoDBExecutor.submit(() -> {
+    public final void addScrapingInforamtion(ScrapingInformation information) {
+        mongoDBExecutor.submit(() -> {
             System.out.println("Adding the scraping information to the Mongo DB");
             scrapingInformationDB.addScrapingInformation(information);
-            return null;
         });
     }
 
@@ -83,6 +85,16 @@ public class MongoDao implements PersistentDaoInf {
         mongoClient.close();
     }
 
+    @Override
+    public boolean addToScrapedLinks(String link, String clientId, String jobId) {
+        return false;
+    }
+
+    @Override
+    public boolean saveSrapedData(String database, String key, String data) {
+        return false;
+    }
+
     public void getUnscrapedLinksInMemory(String clientId, String jobId) {
         mongoDBExecutor.submit(() -> {
             scrapingInformationDB.getUnscrapedLinksInMemory(clientId, jobId, inMemoryDao);
@@ -91,6 +103,11 @@ public class MongoDao implements PersistentDaoInf {
 
     @Override
     public List<String> getLinksToScrape(String clientId, String jobId) {
+        return null;
+    }
+
+    @Override
+    public List<Optional<ActionsAndData>> getElementsWithActionsByLink(String link) throws MalformedURLException {
         return null;
     }
 
