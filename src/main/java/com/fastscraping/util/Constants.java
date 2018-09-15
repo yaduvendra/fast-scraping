@@ -11,7 +11,8 @@ public class Constants {
     private static final String uniqueTagMapName = "uniqueTagMap";
     private static final String uniqueStringMapName = "uniqueStringMap";
 
-    private static final String linksToScrape = "linksToScrape";
+    private static final String linksToScrapeSet = "linksToScrapeSet";
+    private static final String scrapedLinkSet = "scrapedLinkSet";
 
     public static synchronized String getUrlRegexMapName(String uniqueIdentifier) {
         return RedisUtils.encodeRedisKey(urlRegexMapName + uniqueIdentifier);
@@ -26,7 +27,11 @@ public class Constants {
     }
 
     public static synchronized String linksToScrapeSetName(String uniqueIdentifier) {
-        return RedisUtils.encodeRedisKey(linksToScrape + uniqueIdentifier);
+        return RedisUtils.encodeRedisKey(linksToScrapeSet + uniqueIdentifier);
+    }
+
+    public static synchronized String scrapedLinkSetName(String uniqueIdentifier) {
+        return RedisUtils.encodeRedisKey(scrapedLinkSet + uniqueIdentifier);
     }
 
 }

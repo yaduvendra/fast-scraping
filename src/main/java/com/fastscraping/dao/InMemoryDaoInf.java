@@ -19,4 +19,6 @@ public interface InMemoryDaoInf {
     List<Optional<ElementWithActions>> getElementsWithActionsByLink(String link) throws MalformedURLException;
 
     void closeDBConnection();
+
+    boolean addToScrapedLinks(final String link, final String clientId, final String jobId);
 }

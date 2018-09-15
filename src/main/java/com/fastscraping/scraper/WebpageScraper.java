@@ -21,15 +21,15 @@ public class WebpageScraper {
 
     private final ExecutorService executorService;
 
-    private final InMemoryDaoInf scraperDao;
+    private final InMemoryDaoInf inMemoryDaoInf;
 
-    private WebpageScraper(InMemoryDaoInf scraperDao) {
-        this.scraperDao = scraperDao;
+    private WebpageScraper(InMemoryDaoInf inMemoryDaoInf) {
+        this.inMemoryDaoInf = inMemoryDaoInf;
         this.executorService = fixedThreadPoolExecutor;
     }
 
-    private WebpageScraper(InMemoryDaoInf scraperDao, ExecutorService executorService) {
-        this.scraperDao = scraperDao;
+    private WebpageScraper(InMemoryDaoInf inMemoryDaoInf, ExecutorService executorService) {
+        this.inMemoryDaoInf = inMemoryDaoInf;
         this.executorService = executorService;
     }
 
@@ -79,7 +79,7 @@ public class WebpageScraper {
 
             System.out.println("Scraping the links for client - " + clientId + ", jobId - " + jobId);
 
-            ActionFilter actionFilter = new ActionFilter(scraperDao);
+            ActionFilter actionFilter = new ActionFilter(inMemoryDaoInf);
 
             LinkedList<String> unscrapedLinks = new LinkedList<>();
 
@@ -90,22 +90,27 @@ public class WebpageScraper {
                         } else {
                             executorService.execute(() -> {
                                 WebDriver driver = webDriverOptional.get();
-                                driver.get(linkToScrape);
-                                ActionExecutor actionExecutor = new ActionExecutorBuilder().setDriver(driver).build();
+
                                 try {
+                                    driver.get(linkToScrape);
+                                    ActionExecutor actionExecutor = new ActionExecutorBuilder().setDriver(driver).build();
+
                                     actionFilter.getActionsByLink(linkToScrape).forEach(elementWithAction ->
-                                            actionExecutor.executeAction(elementWithAction, scraperDao, linkToScrape,
+                                            actionExecutor.executeAction(elementWithAction, inMemoryDaoInf, linkToScrape,
                                                     clientId, jobId));
                                 } catch (MalformedURLException e) {
                                     e.printStackTrace();
+                                } finally {
+                                    inMemoryDaoInf.addToScrapedLinks(linkToScrape, clientId, jobId);
+                                    WebDriverKeeper.addBackWebDriver(clientId, jobId, driver);
                                 }
-                                WebDriverKeeper.addBackWebDriver(clientId, jobId, driver);
                             });
                         }
                     }
             );
 
-            /** The links which are left because of unavailability of drivers, will be scraped after 2 seconds */
+            /** The links which are left because of unavailability of drivers,
+             *  will be tried for scraping after 2 seconds */
             if (unscrapedLinks.size() > 0) {
                 scheduledExecutor.schedule(new Worker(unscrapedLinks, clientId, jobId), 2, TimeUnit.SECONDS);
             }

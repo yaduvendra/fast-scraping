@@ -5,6 +5,7 @@ import com.fastscraping.models.ElementWithActions;
 import com.fastscraping.models.ScrapingInformation;
 import com.fastscraping.util.Constants;
 import org.redisson.api.RQueue;
+import org.redisson.api.RSet;
 import org.redisson.api.RedissonClient;
 
 import java.io.IOException;
@@ -12,8 +13,10 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
+import static com.fastscraping.util.Constants.scrapedLinkSetName;
 import static com.fastscraping.util.JsonHelper.getObjectFromJson;
 import static com.fastscraping.util.JsonHelper.toPrettyJsonString;
 
@@ -48,8 +51,19 @@ public class RedisDao implements InMemoryDaoInf {
     @Override
     public List<String> getLinksToScrape(final String clientId, final String jobId) {
         RQueue<String> queue = redissonClient.getQueue(Constants.linksToScrapeSetName(clientId + jobId));
+
+        Set<String> scrapedLink = redissonClient.getSet(scrapedLinkSetName(clientId + jobId))
+                .readAll()
+                .stream()
+                .map(Object::toString)
+                .collect(Collectors.toSet());
+
         List<String> queueElements = queue.readAll();
+
+        queueElements.removeAll(scrapedLink); //Don't scrape links which have already been scraped.
+
         queue.clear();
+
         return queueElements;
     }
 
@@ -121,6 +135,13 @@ public class RedisDao implements InMemoryDaoInf {
                 e.printStackTrace();
             }
         });
+    }
+
+    @Override
+    public boolean addToScrapedLinks(final String link, String clientId, String jobId) {
+        return redissonClient
+                .getSet(scrapedLinkSetName(clientId + jobId))
+                .add(link);
     }
 
     public void closeDBConnection() {
