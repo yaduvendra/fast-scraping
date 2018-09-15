@@ -18,10 +18,9 @@ import org.bson.codecs.pojo.PojoCodecProvider;
 import java.net.MalformedURLException;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
-import static com.fastscraping.util.ScraperThreadPools.mongoDBExecutor;
+import static com.fastscraping.util.ScraperThreadPools.persistDBThreadPool;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
 
@@ -63,20 +62,20 @@ public class MongoDao implements PersistentDaoInf {
     }
 
     public final void addScrapingInforamtion(ScrapingInformation information) {
-        mongoDBExecutor.submit(() -> {
+        persistDBThreadPool.submit(() -> {
             System.out.println("Adding the scraping information to the Mongo DB");
             scrapingInformationDB.addScrapingInformation(information);
         });
     }
 
     public final void addScrapingInforamtion(String jsonDoc, String clientId, String jobId) {
-        mongoDBExecutor.execute(() -> {
+        persistDBThreadPool.execute(() -> {
             scrapingInformationDB.addScrapingInformation(jsonDoc, clientId, jobId);
         });
     }
 
     public void addLinksToScrape(String clientId, String jobId, List<String> links) {
-        mongoDBExecutor.execute(() -> {
+        persistDBThreadPool.execute(() -> {
             scrapingInformationDB.addLinksToScrape(clientId, jobId, links);
         });
     }
@@ -96,7 +95,7 @@ public class MongoDao implements PersistentDaoInf {
     }
 
     public void getUnscrapedLinksInMemory(String clientId, String jobId) {
-        mongoDBExecutor.submit(() -> {
+        persistDBThreadPool.submit(() -> {
             scrapingInformationDB.getUnscrapedLinksInMemory(clientId, jobId, inMemoryDao);
         });
     }
