@@ -93,11 +93,16 @@ public class WebpageScraper {
 
                                 try {
                                     driver.get(linkToScrape);
-                                    DataMiner dataMiner = new ActionExecutorBuilder().setDriver(driver).build();
-
-                                    actionFilter.getActionsByLink(linkToScrape).forEach(elementWithAction ->
-                                            dataMiner.mineData(elementWithAction, scraperDaoInf, linkToScrape,
-                                                    clientId, jobId));
+                                    new ActionExecutorBuilder()
+                                            .setDriver(driver)
+                                            .build() //DataMiner instance
+                                            .mineData(
+                                                    actionFilter.getActionsAndDataByLink(linkToScrape),
+                                                    scraperDaoInf,
+                                                    linkToScrape,
+                                                    clientId,
+                                                    jobId
+                                            );
                                 } catch (MalformedURLException e) {
                                     e.printStackTrace();
                                 } finally {

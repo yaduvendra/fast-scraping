@@ -1,5 +1,7 @@
 package com.fastscraping;
 
+import com.fastscraping.dao.InMemoryDaoInf;
+import com.fastscraping.dao.ScraperDao;
 import com.fastscraping.dao.ScraperDaoInf;
 import com.fastscraping.dao.PersistentDaoInf;
 import com.fastscraping.dao.mongo.MongoDao;
@@ -29,16 +31,19 @@ public class Bootstrap {
         final List<ServerAddress> mongoNodes = new LinkedList<>();
         mongoNodes.add(new ServerAddress("localhost"));
 
-        ScraperDaoInf inMemoryDao = new RedisDao(new RedissonConfig());
-        PersistentDaoInf persistentDao = new MongoDao(mongoNodes, inMemoryDao);
-        WebpageScraper scraper = WebpageScraper.getSingletonWebpageScraper(inMemoryDao);
+        PersistentDaoInf persistentDao = new MongoDao(mongoNodes);
+        InMemoryDaoInf inMemoryDao = new RedisDao(new RedissonConfig());
+
+        ScraperDaoInf scraperDao = new ScraperDao(inMemoryDao, persistentDao);
+
+        WebpageScraper scraper = WebpageScraper.getSingletonWebpageScraper(scraperDao);
 
         try {
 
             File scrapingInformationJson = new File("/home/ashish/scraping_information.json");
             BufferedReader bufReader = new BufferedReader(new FileReader(scrapingInformationJson));
 
-            ScrapeLinksPoller scrapeLinksPoller = ScrapeLinksPoller.getSingletonInstance(scraper, inMemoryDao, persistentDao);
+            ScrapeLinksPoller scrapeLinksPoller = ScrapeLinksPoller.getSingletonInstance(scraper, scraperDao);
 
             bufReader.lines().reduce((JSON, nextLine) -> JSON + nextLine + "\n").ifPresent(json -> {
                 try {
@@ -64,8 +69,7 @@ public class Bootstrap {
             e.printStackTrace();
             System.exit(1269);
         } finally {
-            inMemoryDao.closeDBConnection();
-            persistentDao.closeDBConnection();
+            scraperDao.closeDBConnections();
             System.exit(0);
         }
     }

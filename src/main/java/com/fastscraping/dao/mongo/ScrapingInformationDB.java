@@ -2,6 +2,7 @@ package com.fastscraping.dao.mongo;
 
 import com.fastscraping.dao.ScraperDaoInf;
 import com.fastscraping.models.ScrapingInformation;
+import com.mongodb.async.SingleResultCallback;
 import com.mongodb.async.client.FindIterable;
 import com.mongodb.async.client.MongoClient;
 import com.mongodb.async.client.MongoCollection;
@@ -13,10 +14,7 @@ import com.mongodb.client.model.UpdateOptions;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 public class ScrapingInformationDB {
@@ -77,7 +75,7 @@ public class ScrapingInformationDB {
                 });
     }
 
-    public void getUnscrapedLinksInMemory(String clientId, String jobId, ScraperDaoInf inMemoryDao) {
+    public List<String> getUnscrapedLinks(final String clientId, final String jobId) {
 
         List<Bson> filters = new LinkedList<>();
 
@@ -97,10 +95,17 @@ public class ScrapingInformationDB {
                 }
         );
 
-        if (links.size() > 0) {
-            inMemoryDao.addLinksToScrape(clientId, jobId, links);
-        } else {
-            //TODO: Start shutdown process when no link is found for scraping
-        }
+        return links;
+    }
+
+    public void saveScrapedData(String clientId, String jobId, Map<String, Map<String, Object>> collections) {
+        Set<String> collectionNames = collections.keySet();
+
+        collectionNames.forEach(collectionName -> {
+            database.getCollection(collectionName)
+                    .insertOne(new Document(collections.get(collectionName)), (result, t) -> {
+                        System.out.println("The data got inserted for client - " + clientId + " and job - "+ jobId);
+                    });
+        });
     }
 }

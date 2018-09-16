@@ -1,7 +1,6 @@
 package com.fastscraping.dao.mongo;
 
 
-import com.fastscraping.dao.ScraperDaoInf;
 import com.fastscraping.dao.PersistentDaoInf;
 import com.fastscraping.models.ActionsAndData;
 import com.fastscraping.models.ScrapingInformation;
@@ -17,7 +16,9 @@ import org.bson.codecs.pojo.PojoCodecProvider;
 
 import java.net.MalformedURLException;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import static com.fastscraping.util.ScraperThreadPools.persistDBThreadPool;
@@ -31,9 +32,8 @@ public class MongoDao implements PersistentDaoInf {
      */
     private final MongoClient mongoClient;
     private final ScrapingInformationDB scrapingInformationDB;
-    private final ScraperDaoInf inMemoryDao;
 
-    public MongoDao(final List<ServerAddress> mongoNodes, final ScraperDaoInf inMemoryDao) {
+    public MongoDao(final List<ServerAddress> mongoNodes) {
 
         /** Mention all the connection settings in the properties file */
 
@@ -58,7 +58,6 @@ public class MongoDao implements PersistentDaoInf {
 
         mongoClient = MongoClients.create(settings);
         scrapingInformationDB = new ScrapingInformationDB(mongoClient);
-        this.inMemoryDao = inMemoryDao;
     }
 
     public final void addScrapingInforamtion(ScrapingInformation information) {
@@ -90,14 +89,15 @@ public class MongoDao implements PersistentDaoInf {
     }
 
     @Override
-    public boolean saveSrapedData(String database, String key, String data) {
+    public boolean addSrapedData(String clientId, String jobId, Map<String, Map<String, Object>> collection) {
+        persistDBThreadPool.submit(() ->{
+            scrapingInformationDB.saveScrapedData(clientId, jobId, collection);
+        });
         return false;
     }
 
-    public void getUnscrapedLinksInMemory(String clientId, String jobId) {
-        persistDBThreadPool.submit(() -> {
-            scrapingInformationDB.getUnscrapedLinksInMemory(clientId, jobId, inMemoryDao);
-        });
+    public Future<List<String>> getUnscrapedLinks(final String clientId, final String jobId) {
+        return persistDBThreadPool.submit(() -> scrapingInformationDB.getUnscrapedLinks(clientId, jobId));
     }
 
     @Override
@@ -106,7 +106,7 @@ public class MongoDao implements PersistentDaoInf {
     }
 
     @Override
-    public List<Optional<ActionsAndData>> getElementsWithActionsByLink(String link) throws MalformedURLException {
+    public List<Optional<ActionsAndData>> getActionsAndDataByLink(String link) throws MalformedURLException {
         return null;
     }
 

@@ -12,17 +12,17 @@ public class Webpage {
     private final String urlRegex;
     private final HTMLTagWithText uniqueTag;
     private final String uniqueStringOnPage;
-    private final List<ActionsAndData> actionAndData;
+    private final List<ActionsAndData> actionsAndData;
 
     @JsonCreator
     public Webpage(@JsonProperty("urlRegex") String urlRegex,
                    @JsonProperty("uniqueTag") HTMLTagWithText uniqueTag,
                    @JsonProperty("uniqueStringOnPage") String uniqueStringOnPage,
-                   @JsonProperty("actionAndData") List<ActionsAndData> actionAndData) {
+                   @JsonProperty("actionsAndData") List<ActionsAndData> actionsAndData) {
         this.urlRegex = urlRegex;
         this.uniqueTag = uniqueTag;
         this.uniqueStringOnPage = uniqueStringOnPage;
-        this.actionAndData = actionAndData;
+        this.actionsAndData = actionsAndData;
     }
 
     public String getUrlRegex() {
@@ -37,15 +37,15 @@ public class Webpage {
         return uniqueStringOnPage;
     }
 
-    public List<ActionsAndData> getActionAndData() {
-        return actionAndData;
+    public List<ActionsAndData> getActionsAndData() {
+        return actionsAndData;
     }
 
     public static class WebpageBuilder {
         private String urlRegex;
         private HTMLTagWithText uniqueTag;
         private String uniqueStringOnPage;
-        private List<ActionsAndData> actionAndData;
+        private List<ActionsAndData> actionsAndData;
 
         public WebpageBuilder() {
 
@@ -67,13 +67,13 @@ public class Webpage {
             return this;
         }
 
-        public WebpageBuilder setActionAndData(List<ActionsAndData> actionAndData) {
-            this.actionAndData = actionAndData;
+        public WebpageBuilder setActionAndData(List<ActionsAndData> actionsAndData) {
+            this.actionsAndData = actionsAndData;
             return this;
         }
 
         public Webpage build() {
-            return new Webpage(this.urlRegex, this.uniqueTag, this.uniqueStringOnPage, this.actionAndData);
+            return new Webpage(this.urlRegex, this.uniqueTag, this.uniqueStringOnPage, this.actionsAndData);
         }
     }
 }

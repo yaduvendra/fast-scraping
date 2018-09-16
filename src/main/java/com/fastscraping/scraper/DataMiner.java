@@ -8,7 +8,9 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.interactions.Actions;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class DataMiner {
@@ -21,65 +23,93 @@ public class DataMiner {
         seleniumActions = new Actions(this.driver);
     }
 
-    void mineData(ActionsAndData actionsAndData,
+    void mineData(List<ActionsAndData> actionsAndDataList,
                   ScraperDaoInf scraperDao,
                   String urlToScrape,
                   String clientId,
                   String jobId) {
 
-        String selector = actionsAndData.getSelector();
+        Map<String, Map<String, Object>> collection = new HashMap<>(); //[Collection] contains {key -> value} documents
 
-        actionsAndData.getActions().forEach(action -> {
-            System.out.println("Going to execute the action - " + action + " for URL - " + urlToScrape);
-            switch (action) {
-                case HOVER:
-                    hoverElement(selector);
-                    break;
-                case CLICK:
-                    clickElement(selector);
-                    break;
-                case DELETE_ELEMENT:
-                    deleteElememt(selector);
-                    break;
-                case GRAB_LINKS_TO_SCRAPE:
-                    scraperDao.addLinksToScrape(clientId, jobId, grabLinksToScrape(selector));
-                    break;
-                case GRAB_LINKS_IN_GRID_TO_SCRAPE:
-                    scraperDao.addLinksToScrape(clientId, jobId, grabLinksFromGridToScrape(selector));
-                    break;
-            }
+        actionsAndDataList.forEach(actionsAndData -> {
+
+            String parentSelector = actionsAndData.getSelector();
+
+            actionsAndData.getActions().forEach(action -> {
+                System.out.println("Going to execute the action - " + action + " for URL - " + urlToScrape);
+                switch (action) {
+                    case HOVER:
+                        hoverElement(parentSelector);
+                        break;
+                    case CLICK:
+                        clickElement(parentSelector);
+                        break;
+                    case DELETE_ELEMENT:
+                        deleteElememt(parentSelector);
+                        break;
+                    case GRAB_LINKS_TO_SCRAPE:
+                        scraperDao.addLinksToScrape(clientId, jobId, grabLinksToScrape(parentSelector));
+                        break;
+                    case GRAB_LINKS_IN_GRID_TO_SCRAPE:
+                        scraperDao.addLinksToScrape(clientId, jobId, grabLinksFromGridToScrape(parentSelector));
+                        break;
+                }
+            });
+
+            Map<String, Object> keyValueDoc = new HashMap<>(); //Object is taken to be compatible with Mongo DB's API
+
+            actionsAndData.getDataToExtract().forEach(dataToExtract -> {
+                System.out.println("Going to extract data for the URL " + urlToScrape);
+
+                String collectionName = dataToExtract.getCollection();
+
+                if(!collection.containsKey(collectionName)) {
+                    collection.put(collectionName, keyValueDoc);
+                }
+
+                //This will be the name of the key for single text or image mined from the element
+                String storageKeyName = dataToExtract.getStorageKeyName();
+
+                //Selector of the child element from which the data is supposed to be scraped
+                String selectorOfChildWithData = dataToExtract.getSelector();
+
+                //The attributes of the child element which need to be extracted
+                List<String> attributesToScrape = dataToExtract.getAttributes();
+
+                boolean dataIsText = dataToExtract.isText();
+                boolean dataIsImage = dataToExtract.isImage();
+
+                if (dataIsText) {
+                    keyValueDoc.put(storageKeyName, scrapeText(parentSelector, selectorOfChildWithData));
+                } else if (dataIsImage) {
+                    //Download the image. And put the local storage path to {key -> value} mapping
+                }
+
+                attributesToScrape.forEach(attribute -> {
+                    keyValueDoc.put(attribute, scrapeAttribute(parentSelector, selectorOfChildWithData, attribute));
+                });
+            });
         });
 
-        actionsAndData.getDataToExtract().forEach(dataToExtract -> {
-
-            System.out.println("Going to extract data for the URL " + urlToScrape);
-
-            String storageKeyName = dataToExtract.getStorageKeyName();
-            String selectorOfData = dataToExtract.getSelector();
-            List<String> attributesToScrape = dataToExtract.getAttributes();
-            boolean dataIsText = dataToExtract.isText();
-            boolean dataIsImage = dataToExtract.isImage();
-
-            String scrapedText = "";
-            String imageUrl = "";
-
-            if(dataIsText) {
-                scrapedText += scrapeText(selector);
-                scraperDao.addScrapedData(dataToExtract.getDatabase(), storageKeyName, scrapedText);
-            } else if(dataIsImage) {
-                //Download the image.
-            }
-
-        });
+        scraperDao.addScrapedData(clientId, jobId, collection);
     }
 
     /**
      * Data scraping of the elements depending on the CSS selector
      */
 
-    private String scrapeText(String selector) {
-        WebElement webElement = driver.findElement(By.cssSelector(selector));
-        return webElement.getText();
+    private String scrapeAttribute(String parentSelector, String selectorOfChildWithData, String attribute) {
+        return driver
+                .findElement(By.cssSelector(parentSelector))
+                .findElement(By.cssSelector(selectorOfChildWithData))
+                .getAttribute(attribute);
+    }
+
+    private String scrapeText(String parentSelector, String selectorOfChildWithData) {
+        return driver
+                .findElement(By.cssSelector(parentSelector))
+                .findElement(By.cssSelector(selectorOfChildWithData))
+                .getText();
     }
 
     private String scrapeImage(String selector) {
@@ -88,7 +118,7 @@ public class DataMiner {
 
     /**
      * Actions to be executed on the DOM elements
-     *
+     * <p>
      * TODO:: Use jQuery to hover over elements.
      */
 

@@ -5,6 +5,7 @@ import com.fastscraping.models.ScrapingInformation;
 
 import java.net.MalformedURLException;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public interface ScraperDaoInf {
@@ -16,11 +17,13 @@ public interface ScraperDaoInf {
 
     void addScrapingInforamtion(ScrapingInformation scrapingInfo);
 
-    List<Optional<ActionsAndData>> getElementsWithActionsByLink(String link) throws MalformedURLException;
+    List<Optional<ActionsAndData>> getActionsAndDataByLink(String link) throws MalformedURLException;
 
-    void closeDBConnection();
+    void closeDBConnections();
 
     boolean addToScrapedLinks(final String link, final String clientId, final String jobId);
 
-    boolean addScrapedData(final String database, final String dataKey, final String data);
+    boolean addScrapedData(String clientId, String jobId, final Map<String, Map<String, Object>> collection);
+
+    List<Boolean> getUnscrapedLinksInMemory(String clientId, String jobId);
 }

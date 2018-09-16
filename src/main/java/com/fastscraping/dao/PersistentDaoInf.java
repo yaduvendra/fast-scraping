@@ -5,6 +5,7 @@ import com.fastscraping.models.ScrapingInformation;
 
 import java.net.MalformedURLException;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.Future;
 
@@ -15,11 +16,11 @@ public interface PersistentDaoInf {
 
     void addLinksToScrape(String clientId, String jobId, List<String> links);
 
-    void getUnscrapedLinksInMemory(String clientId, String jobId);
+    Future<List<String>> getUnscrapedLinks(String clientId, String jobId);
 
     List<String> getLinksToScrape(String clientId, String jobId);
 
-    List<Optional<ActionsAndData>> getElementsWithActionsByLink(String link) throws MalformedURLException;
+    List<Optional<ActionsAndData>> getActionsAndDataByLink(String link) throws MalformedURLException;
 
     void updateScrapedTrue(String clientId, String jobId, String job);
 
@@ -27,5 +28,5 @@ public interface PersistentDaoInf {
 
     boolean addToScrapedLinks(String link, String clientId, String jobId);
 
-    boolean saveSrapedData(String database, String key, String data);
+    boolean addSrapedData(String clientId, String jobId, Map<String, Map<String, Object>> collection);
 }

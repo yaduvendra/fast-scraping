@@ -4,8 +4,13 @@ import com.fastscraping.models.ActionsAndData;
 import com.fastscraping.models.ScrapingInformation;
 
 import java.net.MalformedURLException;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * This DAO is composed of two sub-DAOs.
@@ -56,18 +61,18 @@ public class ScraperDao implements ScraperDaoInf {
     }
 
     @Override
-    public List<Optional<ActionsAndData>> getElementsWithActionsByLink(String link) throws MalformedURLException {
-        List<Optional<ActionsAndData>> elementsWithActions = inMemeoryDao.getElementsWithActionsByLink(link);
+    public List<Optional<ActionsAndData>> getActionsAndDataByLink(String link) throws MalformedURLException {
+        List<Optional<ActionsAndData>> actionsAndData = inMemeoryDao.getActionsAndDataByLink(link);
 
-        if(elementsWithActions.size() == 0) {
-            return persistentDao.getElementsWithActionsByLink(link);
+        if(actionsAndData.size() == 0) {
+            return persistentDao.getActionsAndDataByLink(link);
         } else{
-            return elementsWithActions;
+            return actionsAndData;
         }
     }
 
     @Override
-    public void closeDBConnection() {
+    public void closeDBConnections() {
         persistentDao.closeDBConnection();
         inMemeoryDao.closeDBConnection();
     }
@@ -79,7 +84,23 @@ public class ScraperDao implements ScraperDaoInf {
     }
 
     @Override
-    public boolean addScrapedData(String database, String dataKey, String data) {
-        return persistentDao.saveSrapedData(database, dataKey, data);
+    public boolean addScrapedData(String clientId, String jobId, Map<String, Map<String, Object>> collection) {
+        return persistentDao.addSrapedData(clientId, jobId, collection);
+    }
+
+    public List<Boolean> getUnscrapedLinksInMemory(String clientId, String jobId) {
+        try {
+            List<String> linksFromPersistDB =  persistentDao.getUnscrapedLinks(clientId, jobId)
+                    .get(2, TimeUnit.SECONDS);
+            if(linksFromPersistDB.size() > 0) {
+                return inMemeoryDao.addLinksToScrape(clientId, jobId, linksFromPersistDB);
+            } else {
+                return new LinkedList<>();
+            }
+        } catch (InterruptedException | ExecutionException | TimeoutException e) {
+            System.out.println("Couldn't fetch the links from the DB. Reason: " + e.getMessage());
+            e.printStackTrace();
+            return new LinkedList<>();
+        }
     }
 }

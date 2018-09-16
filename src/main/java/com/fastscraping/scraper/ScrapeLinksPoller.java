@@ -1,7 +1,6 @@
 package com.fastscraping.scraper;
 
 import com.fastscraping.dao.ScraperDaoInf;
-import com.fastscraping.dao.PersistentDaoInf;
 import com.fastscraping.util.ScraperThreadPools;
 
 import java.util.List;
@@ -14,22 +13,19 @@ public class ScrapeLinksPoller {
     private static ScrapeLinksPoller scrapeLinksPoller = null;
 
     private final WebpageScraper webpageScraper;
-    private final ScraperDaoInf inMemoryDb;
+    private final ScraperDaoInf scraperDao;
     private final ScheduledExecutorService executor;
-    private final PersistentDaoInf persistentDb;
 
-    private ScrapeLinksPoller(WebpageScraper webpageScraper, ScraperDaoInf inMemoryDb, PersistentDaoInf persistentDb) {
+    private ScrapeLinksPoller(WebpageScraper webpageScraper, ScraperDaoInf scraperDao) {
         this.webpageScraper = webpageScraper;
-        this.inMemoryDb = inMemoryDb;
+        this.scraperDao = scraperDao;
         this.executor = ScraperThreadPools.scheduledExecutor;
-        this.persistentDb = persistentDb;
     }
 
-    public static ScrapeLinksPoller getSingletonInstance(WebpageScraper webpageScraper, ScraperDaoInf scraperDao,
-                                                         PersistentDaoInf persistentDb) {
+    public static ScrapeLinksPoller getSingletonInstance(WebpageScraper webpageScraper, ScraperDaoInf scraperDao) {
         synchronized (SCRAPE_LINKS_POLLER_LOCK) {
             if (scrapeLinksPoller == null) {
-                scrapeLinksPoller = new ScrapeLinksPoller(webpageScraper, scraperDao, persistentDb);
+                scrapeLinksPoller = new ScrapeLinksPoller(webpageScraper, scraperDao);
             }
         }
         return scrapeLinksPoller;
@@ -55,10 +51,13 @@ public class ScrapeLinksPoller {
         @Override
         public void run() {
             System.out.println("Running the scheduled job.");
-            List<String> polledLinks = inMemoryDb.getLinksToScrape(clientId, jobId);
+            List<String> polledLinks = scraperDao.getLinksToScrape(clientId, jobId);
 
-            if (polledLinks.size() == 0) {
-                persistentDb.getUnscrapedLinksInMemory(clientId, jobId); //This will put the links in the in-memory db
+            if (polledLinks.size() == 0 && scraperDao.getUnscrapedLinksInMemory(clientId, jobId).size() == 0) {
+                //This block will be executed only if no new unscraped links are found.
+
+                //TODO: From here onwards, start taking measure in a fibonacci time series manner to stop client's job
+
                 return;
             }
 

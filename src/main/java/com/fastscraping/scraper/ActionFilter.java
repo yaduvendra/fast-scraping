@@ -16,9 +16,9 @@ public class ActionFilter {
         this.scraperDao = scraperDao;
     }
 
-    public List<ActionsAndData> getActionsByLink(String link) throws MalformedURLException {
+    public List<ActionsAndData> getActionsAndDataByLink(String link) throws MalformedURLException {
 
-        return scraperDao.getElementsWithActionsByLink(link)
+        return scraperDao.getActionsAndDataByLink(link)
                 .stream()
                 .filter(Optional::isPresent)
                 .map(Optional::get)

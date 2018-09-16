@@ -15,8 +15,7 @@ public class ActionsAndData {
     @JsonCreator
     public ActionsAndData(@JsonProperty("selector") String selector,
                           @JsonProperty("actions") List<ActionName> actions,
-                          @JsonProperty("dataToExtract") List<DataToExtract> dataToExtract
-                              ) {
+                          @JsonProperty("dataToExtract") List<DataToExtract> dataToExtract) {
         this.selector = selector;
         this.actions = actions;
         this.dataToExtract = dataToExtract;

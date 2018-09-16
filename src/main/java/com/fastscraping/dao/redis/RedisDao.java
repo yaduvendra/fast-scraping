@@ -65,7 +65,7 @@ public class RedisDao implements InMemoryDaoInf {
     }
 
     @Override
-    public List<Optional<ActionsAndData>> getElementsWithActionsByLink(final String link)
+    public List<Optional<ActionsAndData>> getActionsAndDataByLink(final String link)
             throws MalformedURLException {
 
         URL urlKey = new URL(link);
@@ -88,26 +88,26 @@ public class RedisDao implements InMemoryDaoInf {
         System.out.println("Going to add the Scraping Information to the Redis.");
 
         scrapingInformation.getWebpages().forEach(webpage -> {
-            if (webpage.getActionAndData() != null) {
+            if (webpage.getActionsAndData() != null) {
                 if (webpage.getUrlRegex() != null) {
                     redissonClient
                             .getMap(Constants.getUrlRegexMapName(scrapingInformation.getClientId() +
                                     scrapingInformation.getJobId()))
-                            .put(webpage.getUrlRegex(), toPrettyJsonString(webpage.getActionAndData()));
+                            .put(webpage.getUrlRegex(), toPrettyJsonString(webpage.getActionsAndData()));
                 }
 
                 if (webpage.getUniqueTag() != null) {
                     redissonClient
                             .getMap(Constants.getUniqueTagMapName(scrapingInformation.getClientId() +
                                     scrapingInformation.getJobId()))
-                            .put(webpage.getUniqueTag(), toPrettyJsonString(webpage.getActionAndData()));
+                            .put(webpage.getUniqueTag(), toPrettyJsonString(webpage.getActionsAndData()));
                 }
 
                 if (webpage.getUniqueStringOnPage() != null) {
                     redissonClient
                             .getMap(Constants.getUniqueStringMapName(scrapingInformation.getClientId() +
                                     scrapingInformation.getJobId()))
-                            .put(webpage.getUniqueStringOnPage(), toPrettyJsonString(webpage.getActionAndData()));
+                            .put(webpage.getUniqueStringOnPage(), toPrettyJsonString(webpage.getActionsAndData()));
                 }
             }
         });
