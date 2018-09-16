@@ -2,6 +2,9 @@ package com.fastscraping.scraper;
 
 import com.fastscraping.dao.ScraperDaoInf;
 import com.fastscraping.models.ActionsAndData;
+import com.fastscraping.models.HTMLTag;
+import com.fastscraping.models.HTMLTag.HTMLTagWithText;
+import com.fastscraping.models.WebpageDetails;
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
@@ -23,7 +26,7 @@ public class DataMiner {
         seleniumActions = new Actions(this.driver);
     }
 
-    void mineData(List<ActionsAndData> actionsAndDataList,
+    void mineData(List<WebpageDetails> webpageDetailsList,
                   ScraperDaoInf scraperDao,
                   String urlToScrape,
                   String clientId,
@@ -31,7 +34,7 @@ public class DataMiner {
 
         Map<String, Map<String, Object>> collection = new HashMap<>(); //[Collection] contains {key -> value} documents
 
-        actionsAndDataList.forEach(actionsAndData -> {
+        filterActionsAndData(webpageDetailsList).forEach(actionsAndData -> {
 
             String parentSelector = actionsAndData.getSelector();
 
@@ -63,7 +66,7 @@ public class DataMiner {
 
                 String collectionName = dataToExtract.getCollection();
 
-                if(!collection.containsKey(collectionName)) {
+                if (!collection.containsKey(collectionName)) {
                     collection.put(collectionName, keyValueDoc);
                 }
 
@@ -91,7 +94,47 @@ public class DataMiner {
             });
         });
 
-        scraperDao.addScrapedData(clientId, jobId, collection);
+        if(collection.size() > 0) {
+            scraperDao.addScrapedData(clientId, jobId, collection);
+        }
+    }
+
+    private List<ActionsAndData> filterActionsAndData(List<WebpageDetails> webpageDetailsList) {
+        String currentURL = driver.getCurrentUrl();
+        return webpageDetailsList
+                .stream()
+                .filter(webpageDetails -> {
+                    return isUrlRegexMatches(webpageDetails, currentURL) ||
+                            isUniqueElementExists(webpageDetails) ||
+                            isPageContainsUniqueString(webpageDetails);
+                })
+                .flatMap(webpageDetails -> webpageDetails.getActionsAndData().stream())
+                .collect(Collectors.toList());
+    }
+
+    /** Is UrlRegex is given in the webpage information then match it with current webpage's URL **/
+    private boolean isUrlRegexMatches(WebpageDetails webpageDetails, String currentURL) {
+        String givenUrlRegex = webpageDetails.getUrlRegex();
+
+        return givenUrlRegex != null &&
+                givenUrlRegex.trim() != "" &&
+                currentURL.matches(givenUrlRegex);
+    }
+
+    /** If a unique element exists on the webpage */
+    private boolean isUniqueElementExists(WebpageDetails webpageDetails) {
+        HTMLTagWithText uniqueTag = webpageDetails.getUniqueTag();
+        WebElement uniqueElement = driver.findElement(By.cssSelector(uniqueTag.getSelector()));
+
+        return uniqueTag.isNotNull() && uniqueElement != null &&
+                uniqueElement.getText() == uniqueTag.getText();
+    }
+
+    /** If the page contains a unique URL */
+    private boolean isPageContainsUniqueString(WebpageDetails webpageDetails) {
+        return driver.findElement(By.tagName("body"))
+                .getText()
+                .contains(webpageDetails.getUniqueStringOnPage());
     }
 
     /**

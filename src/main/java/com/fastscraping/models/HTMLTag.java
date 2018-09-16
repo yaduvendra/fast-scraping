@@ -14,6 +14,18 @@ public interface HTMLTag {
             this.selector = selector;
             this.text = text;
         }
+
+        public String getSelector() {
+            return selector;
+        }
+
+        public String getText() {
+            return text;
+        }
+
+        public boolean isNotNull() {
+            return selector != null && selector.trim() != "" && text != null;
+        }
     }
 
 }

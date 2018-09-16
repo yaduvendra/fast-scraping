@@ -1,22 +1,21 @@
 package com.fastscraping.dao;
 
-import com.fastscraping.models.ActionsAndData;
 import com.fastscraping.models.ScrapingInformation;
+import com.fastscraping.models.WebpageDetails;
 
-import java.net.MalformedURLException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
 
 /**
  * This DAO is composed of two sub-DAOs.
  * InMemoryDaoInf is used as a cache for faster access.
  * PersistentDaoInf is used as the file based persistent data store.
- *
+ * <p>
  * While writing data, approach is to write first in persistent db and then in memory db
  * To read data, read first from in-memory db and then from persistent db (if not found in in-memory db)
  */
@@ -32,6 +31,7 @@ public class ScraperDao implements ScraperDaoInf {
 
     /**
      * First store the information in persistent db then in in-memory db
+     *
      * @return status for all the link insertions
      */
     @Override
@@ -42,14 +42,24 @@ public class ScraperDao implements ScraperDaoInf {
 
     /**
      * Get links from in-memory db. If no links found then try persistent db.
+     *
      * @return links
      */
     @Override
     public List<String> getLinksToScrape(String clientId, String jobId) {
         List<String> links = inMemeoryDao.getLinksToScrape(clientId, jobId);
-        if(links == null || links.size() == 0) {
-            return persistentDao.getLinksToScrape(clientId, jobId);
+        if (links == null || links.size() == 0) {
+            /** No new links found in memory */
+            try {
+                System.out.println("Links not found in memory. Trying the persist database.");
+                return persistentDao.getLinksToScrape(clientId, jobId).get(5, TimeUnit.SECONDS);
+            } catch (InterruptedException | ExecutionException | TimeoutException e) {
+                System.out.println("Error while trying to get data from Persist Data. " + e.getMessage());
+                e.printStackTrace();
+                return new LinkedList<>();
+            }
         } else {
+            /** links found in memory */
             return links;
         }
     }
@@ -61,13 +71,16 @@ public class ScraperDao implements ScraperDaoInf {
     }
 
     @Override
-    public List<Optional<ActionsAndData>> getActionsAndDataByLink(String link) throws MalformedURLException {
-        List<Optional<ActionsAndData>> actionsAndData = inMemeoryDao.getActionsAndDataByLink(link);
-
-        if(actionsAndData.size() == 0) {
-            return persistentDao.getActionsAndDataByLink(link);
-        } else{
-            return actionsAndData;
+    public List<WebpageDetails> getWebpageDetails(String clientId, String jobId) {
+        try {
+            System.out.println("Getting the WebpageDetails.");
+            return persistentDao.getScrapingInformation(clientId, jobId).get(2, TimeUnit.SECONDS)
+                    .stream()
+                    .flatMap(scrapingInformation -> scrapingInformation.getWebpageDetails().stream())
+                    .collect(Collectors.toList());
+        } catch (InterruptedException | ExecutionException | TimeoutException e) {
+            e.printStackTrace();
+            return new LinkedList<>();
         }
     }
 
@@ -90,9 +103,9 @@ public class ScraperDao implements ScraperDaoInf {
 
     public List<Boolean> getUnscrapedLinksInMemory(String clientId, String jobId) {
         try {
-            List<String> linksFromPersistDB =  persistentDao.getUnscrapedLinks(clientId, jobId)
+            List<String> linksFromPersistDB = persistentDao.getUnscrapedLinks(clientId, jobId)
                     .get(2, TimeUnit.SECONDS);
-            if(linksFromPersistDB.size() > 0) {
+            if (linksFromPersistDB.size() > 0) {
                 return inMemeoryDao.addLinksToScrape(clientId, jobId, linksFromPersistDB);
             } else {
                 return new LinkedList<>();

@@ -1,5 +1,6 @@
 package com.fastscraping;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fastscraping.dao.InMemoryDaoInf;
 import com.fastscraping.dao.ScraperDao;
 import com.fastscraping.dao.ScraperDaoInf;
@@ -35,22 +36,22 @@ public class Bootstrap {
         InMemoryDaoInf inMemoryDao = new RedisDao(new RedissonConfig());
 
         ScraperDaoInf scraperDao = new ScraperDao(inMemoryDao, persistentDao);
-
         WebpageScraper scraper = WebpageScraper.getSingletonWebpageScraper(scraperDao);
 
         try {
 
-            File scrapingInformationJson = new File("/home/ashish/scraping_information.json");
+            File scrapingInformationJson = new File("/home/ashish/naukri.json");
             BufferedReader bufReader = new BufferedReader(new FileReader(scrapingInformationJson));
 
             ScrapeLinksPoller scrapeLinksPoller = ScrapeLinksPoller.getSingletonInstance(scraper, scraperDao);
 
             bufReader.lines().reduce((JSON, nextLine) -> JSON + nextLine + "\n").ifPresent(json -> {
                 try {
-                    ScrapingInformation scrapingInfo = JsonHelper.getObjectFromJson(json, ScrapingInformation.class);
+                    ScrapingInformation scrapingInfo = JsonHelper.getScrapingInformationFromJson(json,
+                            new TypeReference<ScrapingInformation>(){});
+
                     /** Index the ScrapingInformation in the DB */
-                    inMemoryDao.addScrapingInforamtion(scrapingInfo);
-                    persistentDao.addScrapingInforamtion(json, scrapingInfo.getClientId(), scrapingInfo.getJobId());
+                    scraperDao.addScrapingInforamtion(scrapingInfo);
 
                     /** Add/initialize the WebDrivers before starting the scraping */
                     WebDriverKeeper.addWebDrivers(scrapingInfo.getClientId(), scrapingInfo.getJobId(),

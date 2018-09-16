@@ -17,9 +17,9 @@ import org.bson.codecs.pojo.PojoCodecProvider;
 import java.net.MalformedURLException;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static com.fastscraping.util.ScraperThreadPools.persistDBThreadPool;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
@@ -67,12 +67,6 @@ public class MongoDao implements PersistentDaoInf {
         });
     }
 
-    public final void addScrapingInforamtion(String jsonDoc, String clientId, String jobId) {
-        persistDBThreadPool.execute(() -> {
-            scrapingInformationDB.addScrapingInformation(jsonDoc, clientId, jobId);
-        });
-    }
-
     public void addLinksToScrape(String clientId, String jobId, List<String> links) {
         persistDBThreadPool.execute(() -> {
             scrapingInformationDB.addLinksToScrape(clientId, jobId, links);
@@ -90,7 +84,7 @@ public class MongoDao implements PersistentDaoInf {
 
     @Override
     public boolean addSrapedData(String clientId, String jobId, Map<String, Map<String, Object>> collection) {
-        persistDBThreadPool.submit(() ->{
+        persistDBThreadPool.submit(() -> {
             scrapingInformationDB.saveScrapedData(clientId, jobId, collection);
         });
         return false;
@@ -101,13 +95,18 @@ public class MongoDao implements PersistentDaoInf {
     }
 
     @Override
-    public List<String> getLinksToScrape(String clientId, String jobId) {
-        return null;
+    public Future<List<String>> getLinksToScrape(String clientId, String jobId) {
+        System.out.println("Getting the links to scrape from the Mongo DB");
+        return persistDBThreadPool.submit(() -> scrapingInformationDB.getLinksToScrape(clientId, jobId));
     }
 
     @Override
-    public List<Optional<ActionsAndData>> getActionsAndDataByLink(String link) throws MalformedURLException {
-        return null;
+    public Future<List<ScrapingInformation>> getScrapingInformation(String clientId, String jobId) {
+        System.out.println("Submiting job to executor to get scraping information.");
+        return persistDBThreadPool.submit(() -> scrapingInformationDB.getScrapingInformation(clientId, jobId)
+                .stream()
+                .filter(info -> info.getClientId() == clientId && info.getJobId() == jobId)
+                .collect(Collectors.toList()));
     }
 
     @Override

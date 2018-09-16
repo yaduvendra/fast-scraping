@@ -55,9 +55,8 @@ public class ScrapeLinksPoller {
 
             if (polledLinks.size() == 0 && scraperDao.getUnscrapedLinksInMemory(clientId, jobId).size() == 0) {
                 //This block will be executed only if no new unscraped links are found.
-
                 //TODO: From here onwards, start taking measure in a fibonacci time series manner to stop client's job
-
+                System.out.println("No new links found while polling.");
                 return;
             }
 

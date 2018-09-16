@@ -14,7 +14,7 @@ public interface InMemoryDaoInf {
 
     void addScrapingInforamtion(ScrapingInformation scrapingInfo);
 
-    List<Optional<ActionsAndData>> getActionsAndDataByLink(String link) throws MalformedURLException;
+    List<ScrapingInformation> getScrapingInformation(String clientId, String jobId);
 
     void closeDBConnection();
 

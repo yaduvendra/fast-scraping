@@ -12,15 +12,13 @@ import java.util.concurrent.Future;
 public interface PersistentDaoInf {
     void addScrapingInforamtion(ScrapingInformation information);
 
-    void addScrapingInforamtion(String jsonDoc, String clientId, String jobId);
-
     void addLinksToScrape(String clientId, String jobId, List<String> links);
 
     Future<List<String>> getUnscrapedLinks(String clientId, String jobId);
 
-    List<String> getLinksToScrape(String clientId, String jobId);
+    Future<List<String>> getLinksToScrape(String clientId, String jobId);
 
-    List<Optional<ActionsAndData>> getActionsAndDataByLink(String link) throws MalformedURLException;
+    Future<List<ScrapingInformation>> getScrapingInformation(String clientId, String jobId);
 
     void updateScrapedTrue(String clientId, String jobId, String job);
 

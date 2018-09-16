@@ -1,12 +1,15 @@
 package com.fastscraping.scraper;
 
 import com.fastscraping.dao.ScraperDaoInf;
+import com.fastscraping.models.ActionsAndData;
+import com.fastscraping.models.WebpageDetails;
 import org.openqa.selenium.WebDriver;
 
-import java.net.MalformedURLException;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
@@ -21,15 +24,16 @@ public class WebpageScraper {
 
     private final ExecutorService executorService;
 
-    private final ScraperDaoInf scraperDaoInf;
+    private final ScraperDaoInf scraperDao;
+    private final Map<String, List<WebpageDetails>> actionsAndDataCache = new ConcurrentHashMap<>();
 
-    private WebpageScraper(ScraperDaoInf scraperDaoInf) {
-        this.scraperDaoInf = scraperDaoInf;
+    private WebpageScraper(ScraperDaoInf scraperDao) {
+        this.scraperDao = scraperDao;
         this.executorService = fixedThreadPoolExecutor;
     }
 
-    private WebpageScraper(ScraperDaoInf scraperDaoInf, ExecutorService executorService) {
-        this.scraperDaoInf = scraperDaoInf;
+    private WebpageScraper(ScraperDaoInf scraperDao, ExecutorService executorService) {
+        this.scraperDao = scraperDao;
         this.executorService = executorService;
     }
 
@@ -79,7 +83,9 @@ public class WebpageScraper {
 
             System.out.println("Scraping the links for client - " + clientId + ", jobId - " + jobId);
 
-            ActionFilter actionFilter = new ActionFilter(scraperDaoInf);
+            if(!actionsAndDataCache.containsKey(clientId + "/" + jobId)) {
+                actionsAndDataCache.put(clientId + "/" + jobId, scraperDao.getWebpageDetails(clientId, jobId));
+            }
 
             LinkedList<String> unscrapedLinks = new LinkedList<>();
 
@@ -97,16 +103,14 @@ public class WebpageScraper {
                                             .setDriver(driver)
                                             .build() //DataMiner instance
                                             .mineData(
-                                                    actionFilter.getActionsAndDataByLink(linkToScrape),
-                                                    scraperDaoInf,
+                                                    actionsAndDataCache.get(clientId + "/" + jobId),
+                                                    scraperDao,
                                                     linkToScrape,
                                                     clientId,
                                                     jobId
                                             );
-                                } catch (MalformedURLException e) {
-                                    e.printStackTrace();
                                 } finally {
-                                    scraperDaoInf.addToScrapedLinks(linkToScrape, clientId, jobId);
+                                    scraperDao.addToScrapedLinks(linkToScrape, clientId, jobId);
                                     WebDriverKeeper.addBackWebDriver(clientId, jobId, driver);
                                 }
                             });

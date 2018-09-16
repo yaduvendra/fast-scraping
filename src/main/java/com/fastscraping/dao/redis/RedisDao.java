@@ -1,23 +1,23 @@
 package com.fastscraping.dao.redis;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fastscraping.dao.InMemoryDaoInf;
-import com.fastscraping.models.ActionsAndData;
 import com.fastscraping.models.ScrapingInformation;
-import com.fastscraping.util.Constants;
+import com.fastscraping.models.WebpageDetails;
 import org.redisson.api.RQueue;
 import org.redisson.api.RedissonClient;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.LinkedList;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static com.fastscraping.util.Constants.scrapedLinkSetName;
-import static com.fastscraping.util.JsonHelper.getObjectFromJson;
-import static com.fastscraping.util.JsonHelper.toPrettyJsonString;
+import static com.fastscraping.util.Constants.*;
+import static com.fastscraping.util.JsonHelper.getWebpageDetailsFromJson;
+import static com.fastscraping.util.JsonHelper.toJsonString;
 
 public class RedisDao implements InMemoryDaoInf {
 
@@ -35,7 +35,7 @@ public class RedisDao implements InMemoryDaoInf {
                     try {
                         URL url = new URL(link);
                         return redissonClient
-                                .getQueue(Constants.linksToScrapeSetName(clientId + jobId))
+                                .getQueue(linksToScrapeSetName(clientId + jobId))
                                 .add(url.toString());
                     } catch (MalformedURLException e) {
                         e.printStackTrace();
@@ -47,7 +47,7 @@ public class RedisDao implements InMemoryDaoInf {
 
     @Override
     public List<String> getLinksToScrape(final String clientId, final String jobId) {
-        RQueue<String> queue = redissonClient.getQueue(Constants.linksToScrapeSetName(clientId + jobId));
+        RQueue<String> queue = redissonClient.getQueue(linksToScrapeSetName(clientId + jobId));
 
         Set<String> scrapedLink = redissonClient.getSet(scrapedLinkSetName(clientId + jobId))
                 .readAll()
@@ -65,52 +65,12 @@ public class RedisDao implements InMemoryDaoInf {
     }
 
     @Override
-    public List<Optional<ActionsAndData>> getActionsAndDataByLink(final String link)
-            throws MalformedURLException {
-
-        URL urlKey = new URL(link);
-
-        return redissonClient.getSet(urlKey.getHost() + urlKey.getPath())
-                .readAll()
-                .stream()
-                .map(elementWithActObj -> {
-                    try {
-                        return Optional.of(getObjectFromJson(elementWithActObj.toString(), ActionsAndData.class));
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                        return Optional.<ActionsAndData>empty();
-                    }
-                })
-                .collect(Collectors.toList());
-    }
-
     public void addScrapingInforamtion(final ScrapingInformation scrapingInformation) {
         System.out.println("Going to add the Scraping Information to the Redis.");
 
-        scrapingInformation.getWebpages().forEach(webpage -> {
-            if (webpage.getActionsAndData() != null) {
-                if (webpage.getUrlRegex() != null) {
-                    redissonClient
-                            .getMap(Constants.getUrlRegexMapName(scrapingInformation.getClientId() +
-                                    scrapingInformation.getJobId()))
-                            .put(webpage.getUrlRegex(), toPrettyJsonString(webpage.getActionsAndData()));
-                }
+        String key = scrapingInformation.getClientId() + "/" + scrapingInformation.getJobId();
 
-                if (webpage.getUniqueTag() != null) {
-                    redissonClient
-                            .getMap(Constants.getUniqueTagMapName(scrapingInformation.getClientId() +
-                                    scrapingInformation.getJobId()))
-                            .put(webpage.getUniqueTag(), toPrettyJsonString(webpage.getActionsAndData()));
-                }
-
-                if (webpage.getUniqueStringOnPage() != null) {
-                    redissonClient
-                            .getMap(Constants.getUniqueStringMapName(scrapingInformation.getClientId() +
-                                    scrapingInformation.getJobId()))
-                            .put(webpage.getUniqueStringOnPage(), toPrettyJsonString(webpage.getActionsAndData()));
-                }
-            }
-        });
+        redissonClient.getMap(scrapingInformationMap).put(key, toJsonString(scrapingInformation.getWebpageDetails()));
 
         scrapingInformation.getRoots().forEach(root -> {
             try {
@@ -120,7 +80,7 @@ public class RedisDao implements InMemoryDaoInf {
                         scrapingInformation.getClientId() + scrapingInformation.getJobId());
 
                 redissonClient
-                        .getQueue(Constants.linksToScrapeSetName(scrapingInformation.getClientId() +
+                        .getQueue(linksToScrapeSetName(scrapingInformation.getClientId() +
                                 scrapingInformation.getJobId()))
                         .add(url.toString());
             } catch (MalformedURLException e) {
@@ -131,12 +91,29 @@ public class RedisDao implements InMemoryDaoInf {
     }
 
     @Override
+    public List<ScrapingInformation> getScrapingInformation(String clientId, String jobId) {
+        String jsonDoc = (String) redissonClient.getMap(scrapingInformationMap)
+                .get(clientId + "/" + jobId);
+
+        try {
+            getWebpageDetailsFromJson(jsonDoc, new TypeReference<List<WebpageDetails>>() {
+            });
+        } catch (IOException e) {
+            e.printStackTrace();
+            return new LinkedList<>();
+        }
+
+        return null;
+    }
+
+    @Override
     public boolean addToScrapedLinks(final String link, String clientId, String jobId) {
         return redissonClient
                 .getSet(scrapedLinkSetName(clientId + jobId))
                 .add(link);
     }
 
+    @Override
     public void closeDBConnection() {
         redissonClient.shutdown();
     }

@@ -2,6 +2,7 @@ package com.fastscraping.dao;
 
 import com.fastscraping.models.ActionsAndData;
 import com.fastscraping.models.ScrapingInformation;
+import com.fastscraping.models.WebpageDetails;
 
 import java.net.MalformedURLException;
 import java.util.List;
@@ -17,7 +18,7 @@ public interface ScraperDaoInf {
 
     void addScrapingInforamtion(ScrapingInformation scrapingInfo);
 
-    List<Optional<ActionsAndData>> getActionsAndDataByLink(String link) throws MalformedURLException;
+    List<WebpageDetails> getWebpageDetails(String clientId, String jobId);
 
     void closeDBConnections();
 

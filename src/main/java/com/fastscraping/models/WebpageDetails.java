@@ -7,7 +7,7 @@ import java.util.List;
 
 import static com.fastscraping.models.HTMLTag.HTMLTagWithText;
 
-public class Webpage {
+public class WebpageDetails {
 
     private final String urlRegex;
     private final HTMLTagWithText uniqueTag;
@@ -15,10 +15,10 @@ public class Webpage {
     private final List<ActionsAndData> actionsAndData;
 
     @JsonCreator
-    public Webpage(@JsonProperty("urlRegex") String urlRegex,
-                   @JsonProperty("uniqueTag") HTMLTagWithText uniqueTag,
-                   @JsonProperty("uniqueStringOnPage") String uniqueStringOnPage,
-                   @JsonProperty("actionsAndData") List<ActionsAndData> actionsAndData) {
+    public WebpageDetails(@JsonProperty("urlRegex") String urlRegex,
+                          @JsonProperty("uniqueTag") HTMLTagWithText uniqueTag,
+                          @JsonProperty("uniqueStringOnPage") String uniqueStringOnPage,
+                          @JsonProperty("actionsAndData") List<ActionsAndData> actionsAndData) {
         this.urlRegex = urlRegex;
         this.uniqueTag = uniqueTag;
         this.uniqueStringOnPage = uniqueStringOnPage;
@@ -72,8 +72,8 @@ public class Webpage {
             return this;
         }
 
-        public Webpage build() {
-            return new Webpage(this.urlRegex, this.uniqueTag, this.uniqueStringOnPage, this.actionsAndData);
+        public WebpageDetails build() {
+            return new WebpageDetails(this.urlRegex, this.uniqueTag, this.uniqueStringOnPage, this.actionsAndData);
         }
     }
 }

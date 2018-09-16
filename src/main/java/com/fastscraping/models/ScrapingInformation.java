@@ -11,19 +11,19 @@ public class ScrapingInformation {
     private final String jobId;
     private final int numberOfBrowsers;
     private final List<String> roots;
-    private final List<Webpage> webpages;
+    private final List<WebpageDetails> webpageDetails;
 
     @JsonCreator
     public ScrapingInformation(@JsonProperty("clientId") String clientId,
                                @JsonProperty("jobId") String jobId,
                                @JsonProperty("numberOfBrowsers") int numberOfBrowsers,
                                @JsonProperty("roots") List<String> roots,
-                               @JsonProperty("webpages") List<Webpage> webpages) {
+                               @JsonProperty("webpageDetails") List<WebpageDetails> webpageDetails) {
         this.clientId = clientId;
         this.jobId = jobId;
         this.numberOfBrowsers = numberOfBrowsers;
         this.roots = roots;
-        this.webpages = webpages;
+        this.webpageDetails = webpageDetails;
     }
 
     public String getClientId() {
@@ -42,8 +42,8 @@ public class ScrapingInformation {
         return roots;
     }
 
-    public List<Webpage> getWebpages() {
-        return webpages;
+    public List<WebpageDetails> getWebpageDetails() {
+        return webpageDetails;
     }
 
 }
