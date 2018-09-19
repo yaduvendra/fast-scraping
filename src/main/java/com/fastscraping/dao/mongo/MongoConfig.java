@@ -6,5 +6,5 @@ import org.bson.json.JsonWriterSettings;
 public class MongoConfig {
     //TODO: Move the mongo related config here
 
-    public static JsonWriterSettings settings = JsonWriterSettings.builder().outputMode(JsonMode.EXTENDED).build();
+    public static JsonWriterSettings settings = JsonWriterSettings.builder().outputMode(JsonMode.RELAXED).build();
 }

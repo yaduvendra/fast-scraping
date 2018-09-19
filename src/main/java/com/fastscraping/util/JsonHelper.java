@@ -40,12 +40,11 @@ public class JsonHelper {
 
     public static synchronized List<WebpageDetails> getWebpageDetailsFromJson(
             String jsonString, TypeReference<List<WebpageDetails>> className) throws IOException {
-
         return objectMapper.readValue(jsonString, className);
     }
+
     public static synchronized ScrapingInformation getScrapingInformationFromJson(
             String jsonString, TypeReference<ScrapingInformation> className) throws IOException {
-
         return objectMapper.readValue(jsonString, className);
     }
 }

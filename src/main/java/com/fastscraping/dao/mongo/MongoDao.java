@@ -62,7 +62,6 @@ public class MongoDao implements PersistentDaoInf {
 
     public final void addScrapingInforamtion(ScrapingInformation information) {
         persistDBThreadPool.submit(() -> {
-            System.out.println("Adding the scraping information to the Mongo DB");
             scrapingInformationDB.addScrapingInformation(information);
         });
     }

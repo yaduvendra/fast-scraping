@@ -30,6 +30,9 @@ public class RedisDao implements InMemoryDaoInf {
     @Override
     public List<Boolean>
     addLinksToScrape(final String clientId, final String jobId, List<String> links) {
+
+        System.out.println("Adding " + links.size() + " links to the queue to scrape further.");
+
         return links.stream()
                 .map(link -> {
                     try {
@@ -66,7 +69,6 @@ public class RedisDao implements InMemoryDaoInf {
 
     @Override
     public void addScrapingInforamtion(final ScrapingInformation scrapingInformation) {
-        System.out.println("Going to add the Scraping Information to the Redis.");
 
         String key = scrapingInformation.getClientId() + "/" + scrapingInformation.getJobId();
 

@@ -2,7 +2,6 @@ package com.fastscraping.scraper;
 
 import com.fastscraping.dao.ScraperDaoInf;
 import com.fastscraping.models.ActionsAndData;
-import com.fastscraping.models.HTMLTag;
 import com.fastscraping.models.HTMLTag.HTMLTagWithText;
 import com.fastscraping.models.WebpageDetails;
 import org.openqa.selenium.By;
@@ -32,9 +31,13 @@ public class DataMiner {
                   String clientId,
                   String jobId) {
 
+        System.out.println("Starting mining");
+
         Map<String, Map<String, Object>> collection = new HashMap<>(); //[Collection] contains {key -> value} documents
 
         filterActionsAndData(webpageDetailsList).forEach(actionsAndData -> {
+
+            System.out.println("Filtered one actionsAndData successfully!!");
 
             String parentSelector = actionsAndData.getSelector();
 
@@ -51,6 +54,7 @@ public class DataMiner {
                         deleteElememt(parentSelector);
                         break;
                     case GRAB_LINKS_TO_SCRAPE:
+                        System.out.println("*** Grabbing new links to scrape ***");
                         scraperDao.addLinksToScrape(clientId, jobId, grabLinksToScrape(parentSelector));
                         break;
                     case GRAB_LINKS_IN_GRID_TO_SCRAPE:
@@ -94,16 +98,19 @@ public class DataMiner {
             });
         });
 
-        if(collection.size() > 0) {
+        if (collection.size() > 0) {
             scraperDao.addScrapedData(clientId, jobId, collection);
         }
     }
 
     private List<ActionsAndData> filterActionsAndData(List<WebpageDetails> webpageDetailsList) {
+        System.out.println("Filtering the actions and data based on " + webpageDetailsList.size() + "webpageDetails");
         String currentURL = driver.getCurrentUrl();
+        System.out.println("Current URL to filter actions and data is " + currentURL);
         return webpageDetailsList
                 .stream()
                 .filter(webpageDetails -> {
+                    System.out.println("Taking decisions");
                     return isUrlRegexMatches(webpageDetails, currentURL) ||
                             isUniqueElementExists(webpageDetails) ||
                             isPageContainsUniqueString(webpageDetails);
@@ -112,26 +119,43 @@ public class DataMiner {
                 .collect(Collectors.toList());
     }
 
-    /** Is UrlRegex is given in the webpage information then match it with current webpage's URL **/
+    /**
+     * Is UrlRegex is given in the webpage information then match it with current webpage's URL
+     **/
     private boolean isUrlRegexMatches(WebpageDetails webpageDetails, String currentURL) {
         String givenUrlRegex = webpageDetails.getUrlRegex();
 
+        System.out.println("Current URL : " + currentURL);
+        System.out.println("URL regex : " + givenUrlRegex);
+
         return givenUrlRegex != null &&
-                givenUrlRegex.trim() != "" &&
+                !givenUrlRegex.trim().equals("") &&
                 currentURL.matches(givenUrlRegex);
     }
 
-    /** If a unique element exists on the webpage */
+    /**
+     * If a unique element exists on the webpage
+     */
     private boolean isUniqueElementExists(WebpageDetails webpageDetails) {
         HTMLTagWithText uniqueTag = webpageDetails.getUniqueTag();
         WebElement uniqueElement = driver.findElement(By.cssSelector(uniqueTag.getSelector()));
 
+        System.out.println("Given Unique tag is not null : " + uniqueTag.isNotNull());
+        System.out.println("Given unique tag text : " + uniqueTag.getText());
+        System.out.println("Found uninque tag text : " + uniqueElement.getText());
+
         return uniqueTag.isNotNull() && uniqueElement != null &&
-                uniqueElement.getText() == uniqueTag.getText();
+                uniqueElement.getText().equals(uniqueTag.getText());
     }
 
-    /** If the page contains a unique URL */
+    /**
+     * If the page contains a unique URL
+     */
     private boolean isPageContainsUniqueString(WebpageDetails webpageDetails) {
+
+        System.out.println("Does page contain unique string " + webpageDetails.getUniqueStringOnPage() + " : " +
+                driver.findElement(By.tagName("body")).getText().contains(webpageDetails.getUniqueStringOnPage()));
+
         return driver.findElement(By.tagName("body"))
                 .getText()
                 .contains(webpageDetails.getUniqueStringOnPage());

@@ -5,17 +5,20 @@ import com.fastscraping.models.ScrapingInformation;
 import com.mongodb.async.client.FindIterable;
 import com.mongodb.async.client.MongoClient;
 import com.mongodb.async.client.MongoDatabase;
+import com.mongodb.async.client.MongoIterable;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.Indexes;
+import com.mongodb.client.model.UpdateOptions;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 
-import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 import static com.fastscraping.util.JsonHelper.getScrapingInformationFromJson;
 import static com.fastscraping.util.JsonHelper.toJsonString;
+import static com.mongodb.client.model.Filters.and;
+import static com.mongodb.client.model.Filters.eq;
 
 public class ScrapingInformationDB {
     /**
@@ -33,46 +36,35 @@ public class ScrapingInformationDB {
 
     public ScrapingInformationDB(MongoClient mongoClient) {
         database = mongoClient.getDatabase(dbName); //TODO: Mention db name in properties file?
-    }
-
-    public void addScrapingInformation(ScrapingInformation information) {
-        System.out.println("Adding the scraping information to Mongo.");
         database.getCollection(scrapingInformationByClientidJobid)
-                .insertOne(Document.parse(toJsonString(information)), (result, ex) -> {
-                    System.out.println("The information has not been saved in the Mongo database. " + ex.getMessage());
+                .createIndex(Indexes.compoundIndex(Indexes.descending("clientId"),
+                        Indexes.descending("jobId")), (res, ex) -> {
+                    ex.printStackTrace();
+                    System.out.println("Exception while creating the index in Mongo DB");
                 });
     }
 
-    public List<ScrapingInformation> getScrapingInformation(String clientId, String jobId) {
-        List<ScrapingInformation> scrapingInformations = new LinkedList<>();
+    public void addScrapingInformation(ScrapingInformation information) {
 
-        try {
-            database
-                    .getCollection(scrapingInformationByClientidJobid)
-                    .find(filterWithClientIdJobId(clientId, jobId))
-                    .maxAwaitTime(2, TimeUnit.SECONDS)
-                    .forEach(document -> {
-                        if (document != null) {
-                            try {
-                                scrapingInformations.add(
-                                        getScrapingInformationFromJson(document.toJson(MongoConfig.settings),
-                                                new TypeReference<ScrapingInformation>() {})
-                                );
-                            } catch (IOException e) {
-                                System.out.println("Document couldn't be read successfully as JSON -> Scraping information");
-                                e.printStackTrace();
-                            }
-                        } else {
-                            System.out.println("The scraping information is null.");
-                        }
-                    }, (result, ex) -> System.out.println("No scraping information could be gathered from Mongo DB."));
-        } catch (Exception e) {
-            System.out.println("No scraping information could be gathered from Mongo DB. Reason: " + e.getMessage());
-            e.printStackTrace();
-        }
+        Document doc = Document.parse(toJsonString(information));
 
-        System.out.println("Scraping Information found : " + scrapingInformations.size());
-        return scrapingInformations;
+        String clientId = information.getClientId();
+        String jobId = information.getJobId();
+
+        database.getCollection(scrapingInformationByClientidJobid)
+                .replaceOne(and(eq("clientId", clientId), eq("jobId", jobId)),
+                        doc,
+                        new UpdateOptions().upsert(true),
+                        (result, ex) -> System.out.println("The information has not been saved in the Mongo database. "
+                                + ex.getMessage()));
+    }
+
+    public MongoIterable<ScrapingInformation> getScrapingInformation(String clientId, String jobId) {
+        List<ScrapingInformation> scrapingInformation = new LinkedList<>();
+
+        FindIterable<Document> scrapingInfo = database.getCollection(scrapingInformationByClientidJobid)
+                .find(and(eq("clientId", clientId), eq("jobId", jobId)))
+                .maxAwaitTime(2, TimeUnit.SECONDS);
     }
 
     public void addLinksToScrape(String clientId, String jobId, List<String> links) {
@@ -128,8 +120,10 @@ public class ScrapingInformationDB {
     private Bson filterWithClientIdJobId(String clientId, String jobId) {
         List<Bson> filters = new LinkedList<>();
 
-        filters.add(Filters.eq("clientId", clientId));
-        filters.add(Filters.eq("jobId", jobId));
+        System.out.println("Filtering for clientId : " + clientId + " jobId : " + jobId);
+
+        filters.add(eq("clientId", clientId));
+        filters.add(eq("jobId", jobId));
 
         Bson withFilters = Filters.and(filters);
         return Filters.and(withFilters);

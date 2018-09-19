@@ -72,8 +72,8 @@ public class ScraperDao implements ScraperDaoInf {
 
     @Override
     public List<WebpageDetails> getWebpageDetails(String clientId, String jobId) {
-        try {
             System.out.println("Getting the WebpageDetails.");
+        try {
             return persistentDao.getScrapingInformation(clientId, jobId).get(2, TimeUnit.SECONDS)
                     .stream()
                     .flatMap(scrapingInformation -> scrapingInformation.getWebpageDetails().stream())

@@ -84,6 +84,7 @@ public class WebpageScraper {
             System.out.println("Scraping the links for client - " + clientId + ", jobId - " + jobId);
 
             if(!actionsAndDataCache.containsKey(clientId + "/" + jobId)) {
+                System.out.println("Adding the actions and data to the cache for" + clientId + "/" + jobId);
                 actionsAndDataCache.put(clientId + "/" + jobId, scraperDao.getWebpageDetails(clientId, jobId));
             }
 
@@ -92,6 +93,7 @@ public class WebpageScraper {
             newLinks.forEach(linkToScrape -> {
                         Optional<WebDriver> webDriverOptional = WebDriverKeeper.getWebDriver(clientId, jobId);
                         if (!webDriverOptional.isPresent()) {
+                            System.out.println("Webdriver is not available.");
                             unscrapedLinks.add(linkToScrape);
                         } else {
                             executorService.execute(() -> {
@@ -99,6 +101,7 @@ public class WebpageScraper {
 
                                 try {
                                     driver.get(linkToScrape);
+                                    System.out.println("Going to mine the data");
                                     new ActionExecutorBuilder()
                                             .setDriver(driver)
                                             .build() //DataMiner instance
