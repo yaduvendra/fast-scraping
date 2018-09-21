@@ -9,7 +9,9 @@ import com.fastscraping.models.ScrapingInformation;
 import com.fastscraping.models.WebpageDetails;
 
 import java.io.IOException;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 
 public class JsonHelper {
 
@@ -47,4 +49,28 @@ public class JsonHelper {
             String jsonString, TypeReference<ScrapingInformation> className) throws IOException {
         return objectMapper.readValue(jsonString, className);
     }
+
+    public static synchronized <T> Optional<T> getObjectFromJson(String jsonString, Class<T> className) {
+        try {
+            T object = objectMapper.readValue(jsonString, className);
+            if(object == null) {
+                return Optional.empty();
+            } else {
+                return Optional.of(object);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            return Optional.empty();
+        }
+    }
+
+    public static synchronized <T> List<T> getObjectListFromJson(String jsonString) {
+        try {
+            return objectMapper.readValue(jsonString, new TypeReference<List<T>>(){});
+        } catch (IOException e) {
+            e.printStackTrace();
+            return new LinkedList<>();
+        }
+    }
+
 }

@@ -4,15 +4,11 @@ import com.fastscraping.dao.ScraperDaoInf;
 import com.fastscraping.models.ActionsAndData;
 import com.fastscraping.models.HTMLTag.HTMLTagWithText;
 import com.fastscraping.models.WebpageDetails;
-import org.openqa.selenium.By;
-import org.openqa.selenium.JavascriptExecutor;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
+import org.openqa.selenium.*;
+import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.interactions.Actions;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class DataMiner {
@@ -107,6 +103,7 @@ public class DataMiner {
         System.out.println("Filtering the actions and data based on " + webpageDetailsList.size() + "webpageDetails");
         String currentURL = driver.getCurrentUrl();
         System.out.println("Current URL to filter actions and data is " + currentURL);
+
         return webpageDetailsList
                 .stream()
                 .filter(webpageDetails -> {
@@ -125,9 +122,6 @@ public class DataMiner {
     private boolean isUrlRegexMatches(WebpageDetails webpageDetails, String currentURL) {
         String givenUrlRegex = webpageDetails.getUrlRegex();
 
-        System.out.println("Current URL : " + currentURL);
-        System.out.println("URL regex : " + givenUrlRegex);
-
         return givenUrlRegex != null &&
                 !givenUrlRegex.trim().equals("") &&
                 currentURL.matches(givenUrlRegex);
@@ -138,14 +132,14 @@ public class DataMiner {
      */
     private boolean isUniqueElementExists(WebpageDetails webpageDetails) {
         HTMLTagWithText uniqueTag = webpageDetails.getUniqueTag();
-        WebElement uniqueElement = driver.findElement(By.cssSelector(uniqueTag.getSelector()));
 
-        System.out.println("Given Unique tag is not null : " + uniqueTag.isNotNull());
-        System.out.println("Given unique tag text : " + uniqueTag.getText());
-        System.out.println("Found uninque tag text : " + uniqueElement.getText());
-
-        return uniqueTag.isNotNull() && uniqueElement != null &&
-                uniqueElement.getText().equals(uniqueTag.getText());
+        return findElement(By.cssSelector(uniqueTag.getSelector()))
+                .filter(webElement ->
+                        uniqueTag.isNotNull() &&
+                                webElement != null &&
+                                webElement.getText().equals(uniqueTag.getText())
+                )
+                .isPresent();
     }
 
     /**
@@ -153,34 +147,68 @@ public class DataMiner {
      */
     private boolean isPageContainsUniqueString(WebpageDetails webpageDetails) {
 
-        System.out.println("Does page contain unique string " + webpageDetails.getUniqueStringOnPage() + " : " +
-                driver.findElement(By.tagName("body")).getText().contains(webpageDetails.getUniqueStringOnPage()));
-
-        return driver.findElement(By.tagName("body"))
-                .getText()
-                .contains(webpageDetails.getUniqueStringOnPage());
+        return findElement(By.tagName("body"))
+                .filter(webElement ->
+                        webElement
+                                .getText()
+                                .contains(webpageDetails.getUniqueStringOnPage())
+                )
+                .isPresent();
     }
 
     /**
      * Data scraping of the elements depending on the CSS selector
      */
 
-    private String scrapeAttribute(String parentSelector, String selectorOfChildWithData, String attribute) {
-        return driver
-                .findElement(By.cssSelector(parentSelector))
-                .findElement(By.cssSelector(selectorOfChildWithData))
-                .getAttribute(attribute);
+    private Optional<String> scrapeAttribute(String parentSelector, String selectorOfChildWithData, String attribute) {
+        return findElement(By.cssSelector(parentSelector))
+                .flatMap(webElement -> findChildElement(webElement, By.cssSelector(selectorOfChildWithData))
+                        .map(webElement1 -> webElement1.getAttribute(attribute))
+                );
     }
 
-    private String scrapeText(String parentSelector, String selectorOfChildWithData) {
-        return driver
-                .findElement(By.cssSelector(parentSelector))
-                .findElement(By.cssSelector(selectorOfChildWithData))
-                .getText();
+    private Optional<String> scrapeText(String parentSelector, String selectorOfChildWithData) {
+        return findElement(By.cssSelector(parentSelector))
+                .flatMap(webElement ->
+                        findChildElement(webElement, By.cssSelector(selectorOfChildWithData))
+                                .map(WebElement::getText)
+                );
     }
 
     private String scrapeImage(String selector) {
         return "";
+    }
+
+    private Optional<WebElement> findElement(By findQuery) {
+        try {
+            return Optional.of(driver.findElement(findQuery));
+        } catch (NoSuchElementException ex) {
+            return Optional.empty();
+        }
+    }
+
+    private Optional<WebElement> findChildElement(WebElement parent, By findQuery) {
+        try {
+            return Optional.of(parent.findElement(findQuery));
+        } catch (NoSuchElementException ex) {
+            return Optional.empty();
+        }
+    }
+
+    private List<WebElement> findChildElements(WebElement parent, By findQuery) {
+        try {
+            return parent.findElements(findQuery);
+        } catch (NoSuchElementException ex) {
+            return new LinkedList<>();
+        }
+    }
+
+    private List<WebElement> findElements(By findQuery) {
+        try {
+            return driver.findElements(findQuery);
+        } catch (NoSuchElementException ex) {
+            return Collections.emptyList();
+        }
     }
 
     /**
@@ -190,12 +218,12 @@ public class DataMiner {
      */
 
     private void hoverElement(String selector) {
-        WebElement element = driver.findElement(By.cssSelector(selector));
-        seleniumActions.moveToElement(element);
+        findElement(By.cssSelector(selector)).map(seleniumActions::moveToElement);
     }
 
     private void clickElement(String selector) {
-        driver.findElement(By.cssSelector(selector)).click();
+        Optional<WebElement> webElementOptional = findElement(By.cssSelector(selector));
+        webElementOptional.ifPresent(WebElement::click);
     }
 
     private void deleteElememt(String selector) {
@@ -206,17 +234,17 @@ public class DataMiner {
 
     private List<String> grabLinksFromGridToScrape(String selector) {
 
-        return driver.findElements(By.cssSelector(selector)).stream().flatMap(webElement -> {
-            List<WebElement> linkElements = getAllDescendents(webElement, "a");
+        List<WebElement> webElements = findElements(By.cssSelector(selector));
 
-            return linkElements.stream()
-                    .map(linkWebElement -> linkWebElement.getAttribute("href"));
-
-        }).collect(Collectors.toList());
+        return webElements.stream().flatMap(webElement ->
+                getAllDescendents(Optional.of(webElement), "a")
+                        .stream()
+                        .map(linkWebElement -> linkWebElement.getAttribute("href"))
+        ).collect(Collectors.toList());
     }
 
     private List<String> grabLinksToScrape(String selector) {
-        List<WebElement> linkElements = getAllDescendents(driver.findElement(By.cssSelector(selector)), "a");
+        List<WebElement> linkElements = getAllDescendents(findElement(By.cssSelector(selector)), "a");
 
         return linkElements
                 .stream()
@@ -224,8 +252,12 @@ public class DataMiner {
                 .collect(Collectors.toList());
     }
 
-    private List<WebElement> getAllDescendents(WebElement parent, String descendentTag) {
-        return parent.findElements(By.xpath(".//" + descendentTag));
+    private List<WebElement> getAllDescendents(Optional<WebElement> parent, String descendentTag) {
+        if (parent.isPresent()) {
+            return findChildElements(parent.get(), By.xpath(".//" + descendentTag));
+        } else {
+            return new ArrayList<>();
+        }
     }
 
 

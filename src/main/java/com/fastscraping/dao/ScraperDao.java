@@ -103,7 +103,7 @@ public class ScraperDao implements ScraperDaoInf {
 
     public List<Boolean> getUnscrapedLinksInMemory(String clientId, String jobId) {
         try {
-            List<String> linksFromPersistDB = persistentDao.getUnscrapedLinks(clientId, jobId)
+            List<String> linksFromPersistDB = persistentDao.getLinksToScrape(clientId, jobId)
                     .get(2, TimeUnit.SECONDS);
             if (linksFromPersistDB.size() > 0) {
                 return inMemeoryDao.addLinksToScrape(clientId, jobId, linksFromPersistDB);

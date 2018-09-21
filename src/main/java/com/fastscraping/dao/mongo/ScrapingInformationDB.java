@@ -1,6 +1,7 @@
 package com.fastscraping.dao.mongo;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fastscraping.models.ScraperLinks;
 import com.fastscraping.models.ScrapingInformation;
 import com.mongodb.Block;
 import com.mongodb.client.FindIterable;
@@ -15,11 +16,13 @@ import org.bson.conversions.Bson;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
-import static com.fastscraping.util.JsonHelper.getScrapingInformationFromJson;
-import static com.fastscraping.util.JsonHelper.toJsonString;
+import static com.fastscraping.util.JsonHelper.*;
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
+import static com.mongodb.client.model.Projections.include;
 
 public class ScrapingInformationDB {
     /**
@@ -78,23 +81,33 @@ public class ScrapingInformationDB {
         return scrapingInformation;
     }
 
-    public void addLinksToScrape(String clientId, String jobId, List<String> links) {
+    public void addLinksToScrape(String clientId, String jobId, List<String> linksList) {
 
-        Map<String, Object> mapToInsert = new HashMap<>();
-        mapToInsert.put("clientId", clientId);
-        mapToInsert.put("jobId", jobId);
-        mapToInsert.put("links", links);
+        ScraperLinks links = new ScraperLinks(clientId, jobId, linksList);
 
         database.getCollection(linksToScrapebyClientIdJobId)
-                .insertOne(new Document(mapToInsert));
+                .insertOne(Document.parse(toJsonString(links)));
     }
 
     public List<String> getLinksToScrape(String clientId, String jobId) {
-        List<String> links = new LinkedList<>();
+        List<Optional<ScraperLinks>> links = new LinkedList<>();
+
         database.getCollection(linksToScrapebyClientIdJobId)
                 .find(and(eq("clientId", clientId), eq("jobId", jobId)))
-                .forEach((Block<Document>) doc -> links.add(doc.toJson(MongoConfig.settings)));
-        return links;
+                .forEach((Block<Document>) doc -> {
+                    links.add(getObjectFromJson(doc.toJson(MongoConfig.settings), ScraperLinks.class));
+                });
+
+        links.forEach(link -> {
+            link.ifPresent(scraperLinks ->
+                    System.out.println("The link to scrape is found to be - " + scraperLinks.getLinks()));
+        });
+
+        return links.stream()
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .flatMap(scraperLink -> scraperLink.getLinks().stream())
+                .collect(Collectors.toList());
     }
 
     public List<String> getUnscrapedLinks(final String clientId, final String jobId) {
