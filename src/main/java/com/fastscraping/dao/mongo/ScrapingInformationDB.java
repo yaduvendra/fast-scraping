@@ -92,8 +92,8 @@ public class ScrapingInformationDB {
     public List<String> getLinksToScrape(String clientId, String jobId) {
         List<String> links = new LinkedList<>();
         database.getCollection(linksToScrapebyClientIdJobId)
-                .find(filterWithClientIdJobId(clientId, jobId), String.class)
-                .forEach((Block<String>) links::add);
+                .find(and(eq("clientId", clientId), eq("jobId", jobId)))
+                .forEach((Block<Document>) doc -> links.add(doc.toJson(MongoConfig.settings)));
         return links;
     }
 
